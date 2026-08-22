@@ -2,9 +2,9 @@ import requests
 from bs4 import BeautifulSoup
 
 MODULE_INFO = {
-    'id': 'ankergames2',
-    'display_name': 'AnkerGames2',
-    'base_url': 'https://ankergames.net/search/',
+    'id': 'fitgirl',
+    'display_name': 'Fitgirl',
+    'base_url': 'https://fitgirl-repacks.site/?s=',
     'enabled': True,
     'version': '1.0.0',
     'icon': 'sports_esports',
@@ -31,20 +31,28 @@ def getSoup(website: str) -> BeautifulSoup:
 def getLinks(search, url):
     url += search
     soup = getSoup(url)
-    games = soup.select("div.grid:nth-child(6)")
+    game_articles = soup.find_all('article')
     results = {"titles": [], "links": [], "images": [], "descriptions": []}
-    for game in games:
-        for article in game.find_all("article"):
-            results['titles'].append(article.get('title') or 'NULL')
-            results['descriptions'].append(article.get('description') or 'NULL')
-            results['images'].append(article.get('image') or 'NULL')
-            link = article.find_all('div')[0].find_all('a')[0]
-            results['links'].append(link.get('href') or 'NULL')
+    for article in game_articles:
+        link = article.select_one("header h1 a")
+        desc = article.select_one("div p")
+        if link:
+            results["titles"].append(link.get_text() or 'NULL')
+            results["links"].append(link.get('href') or 'NULL')
+        else:
+            results["titles"].append('NULL')
+            results["links"].append('NULL')
+        results["images"].append('NULL')
+        if desc:
+            results["descriptions"].append(desc.get_text() or 'NULL')
+        else:
+            results["descriptions"].append('NULL')
+    print(results)
     return results
 
 def getModuleInfo():
     return MODULE_INFO
 
 if __name__ == '__main__':
-    res = getLinks('dishonored', "https://ankergames.net/search/")
+    res = getLinks('dishonored', "https://fitgirl-repacks.site/?s=")
     print(res)
