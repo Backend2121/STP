@@ -7,6 +7,7 @@ MODULE_INFO = {
     'base_url': 'https://ankergames.net/search/',
     'enabled': True,
     'version': '1.0.0',
+    'internal_page': False,
     'icon': 'sports_esports',
     'color': '#1e88e5',
     'timeout': 10,
@@ -19,6 +20,9 @@ xpath = "/html/body/div[2]/main/div/div/div[6]"
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:10.0) Gecko/20100101 Firefox/10.0',
 }
+
+def displayInternalPage(selectedUrl: str):
+    pass
 
 def getSoup(website: str) -> BeautifulSoup:
     """Given an url, return the soup of it using requests"""

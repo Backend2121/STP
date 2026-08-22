@@ -59,7 +59,7 @@ class SearchBar(ui.column):
         print(f"Selected modules: {selected_modules}")
         SearchResults.refresh()
         mods = utils.getModulesRefs()
-        full_res = {"titles": [], "links": [], "images": [], "descriptions": [], "origin": []}
+        full_res = {"titles": [], "links": [], "images": [], "descriptions": [], "origin": [], "modId": []}
         for selected_module in selected_modules:
             for mod in mods:
                 if selected_module == mod['id']:
@@ -79,6 +79,7 @@ class SearchBar(ui.column):
                         full_res['images'].append(res['images'])
                         full_res['descriptions'].append(res['descriptions'])
                         full_res['origin'].append(mod['display_name'])
+                        full_res['modId'].append(mod['id'])
         app.storage.user['search_results'] = full_res
         SearchResults.refresh()
 
@@ -96,17 +97,31 @@ class SearchResults(ui.grid):
                         images = app.storage.user['search_results']['images'][i]
                         links = app.storage.user['search_results']['links'][i]
                         origin = app.storage.user['search_results']['origin'][i]
+                        modId = app.storage.user['search_results']['modId'][i]
+                        mod = utils.getModuleById(modId)
                         for k,v in enumerate(titles):
                             with ui.card():
                                 with ui.row(align_items='center').classes('w-full justify-between'):
                                     ui.label(text=v).classes('text-xl')
                                     ui.badge(text=origin).classes("py-2 text-center")
-                                with ui.link(target=links[k], new_tab=True).classes('w-full h-full'):
-                                    ui.image(source=images[k]).classes('object-scale-down')
-                                    if (descriptions[k] != 'NULL'):
-                                        ui.label(text=descriptions[k])
+                                if mod and mod['internal_page'] == True:
+                                    temp = modId
+                                    trg = k
+                                    ui.button(text="Select link", on_click=lambda: (self.open_internal_page(temp, v))).classes('w-full text-center')
+                                else:
+                                    with ui.link(target=links[k], new_tab=True).classes('w-full h-full'):
+                                        ui.image(source=images[k]).classes('object-scale-down')
+                                        if (descriptions[k] != 'NULL'):
+                                            ui.label(text=descriptions[k])
             else:
                 with ui.label(text="No results").classes("w-full text-center text-2xl font-bold"):
                     pass
-        except:
+        except Exception as e:
+            print(e)
             pass
+    
+    def open_internal_page(self, modId, target):
+        print(f"Open_Internal_Page: {modId} - {target}")
+        mod = utils.getModuleById(modId)
+        if mod and mod['internal_page'] == True:
+            mod['mod'].displayInternalPage(selectedUrl=target)

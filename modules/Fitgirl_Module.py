@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+from nicegui import ui
+
 
 MODULE_INFO = {
     'id': 'fitgirl',
@@ -7,6 +9,7 @@ MODULE_INFO = {
     'base_url': 'https://fitgirl-repacks.site/?s=',
     'enabled': True,
     'version': '1.0.0',
+    'internal_page': True,
     'icon': 'sports_esports',
     'color': '#1e88e5',
     'timeout': 10,
@@ -19,6 +22,14 @@ xpath = "/html/body/div[2]/main/div/div/div[6]"
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:10.0) Gecko/20100101 Firefox/10.0',
 }
+
+def displayInternalPage(selectedUrl: str):
+    """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
+    with ui.dialog() as dialog, ui.card():
+        with ui.column():
+            ui.label(selectedUrl)   
+            ui.button('Close', on_click=dialog.close)
+    dialog.open()
 
 def getSoup(website: str) -> BeautifulSoup:
     """Given an url, return the soup of it using requests"""
@@ -47,7 +58,6 @@ def getLinks(search, url):
             results["descriptions"].append(desc.get_text() or 'NULL')
         else:
             results["descriptions"].append('NULL')
-    print(results)
     return results
 
 def getModuleInfo():
