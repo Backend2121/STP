@@ -119,7 +119,6 @@ class SearchResults(ui.grid):
             pass
     
     def open_internal_page(self, modId:str, target:str):
-        print(f"Open_Internal_Page: {modId} - {target} - {id(target)}")
         mod = utils.getModuleById(modId)
         if mod and mod['internal_page'] == True:
             mod['mod'].displayInternalPage(selectedUrl=target)

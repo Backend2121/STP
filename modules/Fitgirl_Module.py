@@ -25,10 +25,37 @@ headers = {
 
 def displayInternalPage(selectedUrl: str):
     """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
-    with ui.dialog() as dialog, ui.card():
-        with ui.column():
-            ui.label(selectedUrl)   
-            ui.button('Close', on_click=dialog.close)
+    soup = getSoup(selectedUrl)
+    entry_content = soup.select_one("div.entry-content")
+    if not entry_content: return
+    title = entry_content.select_one("h3 strong")
+    if not title: return
+    img = entry_content.select_one("p a img")
+    if not img: return
+    infos = entry_content.select_one("p")
+    if not infos: return
+    li_elements = entry_content.select("ul li")
+    if not li_elements: return
+    links = []
+    for li in li_elements:
+        if len(li.select("a")) > 0:
+            l = li.select_one("a")
+            if not l: continue
+            links.append(l)
+    
+    with ui.dialog() as dialog:
+        with ui.card().classes("w-[80%] h-[80%] relative"):
+            with ui.card().classes('sticky top-0 right-0 z-10 w-full flex-row justify-end gap-1 ml-auto'):
+                ui.button(icon='close', on_click=dialog.close).props('flat round dense')
+                ui.button(icon='open_in_new', on_click=lambda: ui.navigate.to(selectedUrl, new_tab=True)).props('flat round dense')
+            with ui.column():
+                ui.label(text=title.text).classes("w-full text-center text-2xl")
+                ui.image(source=img.get('src')).classes('object-scale-down')
+                ui.label(text="INFO").classes("w-full text-center text-xl")
+                ui.label(text=infos.text)
+                ui.label(text="LINKS").classes("w-full text-center text-xl")
+                for link in links:
+                    ui.link(text=link.text, target=link.get('href'))
     dialog.open()
 
 def getSoup(website: str) -> BeautifulSoup:
