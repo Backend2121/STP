@@ -7,7 +7,6 @@ def getModuleById(modId: str):
     mods = getModulesRefs()
     for mod in mods:
         if modId == mod['id']:
-            print(f"Returning {mod['id']} searched for {modId}")
             return mod
 
 def loadModules(modules: list):

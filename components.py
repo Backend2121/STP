@@ -99,20 +99,18 @@ class SearchResults(ui.grid):
                         origin = app.storage.user['search_results']['origin'][i]
                         modId = app.storage.user['search_results']['modId'][i]
                         mod = utils.getModuleById(modId)
-                        for k,v in enumerate(titles):
+                        for x in range(0, len(titles)):
                             with ui.card():
                                 with ui.row(align_items='center').classes('w-full justify-between'):
-                                    ui.label(text=v).classes('text-xl')
+                                    ui.label(text=titles[x]).classes('text-xl')
                                     ui.badge(text=origin).classes("py-2 text-center")
                                 if mod and mod['internal_page'] == True:
-                                    temp = modId
-                                    trg = k
-                                    ui.button(text="Select link", on_click=lambda: (self.open_internal_page(temp, v))).classes('w-full text-center')
+                                    ui.button(text="Select link", on_click=lambda m=modId, t=links[x]: self.open_internal_page(str(m), t)).classes('w-full text-center')
                                 else:
-                                    with ui.link(target=links[k], new_tab=True).classes('w-full h-full'):
-                                        ui.image(source=images[k]).classes('object-scale-down')
-                                        if (descriptions[k] != 'NULL'):
-                                            ui.label(text=descriptions[k])
+                                    with ui.link(target=links[x], new_tab=True).classes('w-full h-full'):
+                                        ui.image(source=images[x]).classes('object-scale-down')
+                                        if (descriptions[x] != 'NULL'):
+                                            ui.label(text=descriptions[x])
             else:
                 with ui.label(text="No results").classes("w-full text-center text-2xl font-bold"):
                     pass
@@ -120,8 +118,8 @@ class SearchResults(ui.grid):
             print(e)
             pass
     
-    def open_internal_page(self, modId, target):
-        print(f"Open_Internal_Page: {modId} - {target}")
+    def open_internal_page(self, modId:str, target:str):
+        print(f"Open_Internal_Page: {modId} - {target} - {id(target)}")
         mod = utils.getModuleById(modId)
         if mod and mod['internal_page'] == True:
             mod['mod'].displayInternalPage(selectedUrl=target)
