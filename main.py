@@ -2,7 +2,7 @@ import gui
 import os
 
 # TODO
-# Implement header customization in gui
+# Implement web headers customization in gui
 # Rewrite in utils the getter for currently active modules
 
 if __name__ in {"__main__", "__mp_main__"}:
