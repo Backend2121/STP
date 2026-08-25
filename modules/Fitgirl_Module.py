@@ -26,6 +26,7 @@ headers = {
 def displayInternalPage(selectedUrl: str):
     """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
     soup = getSoup(selectedUrl)
+    if not soup: return
     entry_content = soup.select_one("div.entry-content")
     if not entry_content: return
     title = entry_content.select_one("h3 strong")
@@ -58,17 +59,22 @@ def displayInternalPage(selectedUrl: str):
                     ui.link(text=link.text, target=link.get('href'))
     dialog.open()
 
-def getSoup(website: str) -> BeautifulSoup:
+def getSoup(website: str) -> BeautifulSoup | None:
     """Given an url, return the soup of it using requests"""
-    r = requests.get(url=website, headers=headers)
-    if r.status_code != 200:
-        raise RuntimeError(f"Status code for {website} is {r.status_code}")
-    soup = BeautifulSoup(r.content, "html.parser")
-    return soup
+    try:
+        r = requests.get(url=website, headers=headers)
+        if r.status_code != 200:
+            raise RuntimeError(f"Status code for {website} is {r.status_code}")
+        soup = BeautifulSoup(r.content, "html.parser")
+        return soup
+    except Exception as e:
+        print(e)
+        return None
 
 def getLinks(search, url):
     url += search
     soup = getSoup(url)
+    if not soup: return
     game_articles = soup.find_all('article')
     results = {"titles": [], "links": [], "images": [], "descriptions": []}
     for article in game_articles:
