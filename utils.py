@@ -3,6 +3,14 @@ import importlib
 loaded_modules = []
 loaded_modules_metadata = []
 
+def has_nested_value(d: dict) -> bool:
+    return any(
+        item
+        for lists in d.values()
+        for sublist in lists
+        for item in sublist
+    )
+
 def getModuleById(modId: str):
     mods = getModulesRefs()
     for mod in mods:

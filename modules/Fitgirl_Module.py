@@ -76,7 +76,7 @@ def getLinks(search, url):
     soup = getSoup(url)
     if not soup: return
     game_articles = soup.find_all('article')
-    results = {"titles": [], "links": [], "images": [], "descriptions": []}
+    results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
     for article in game_articles:
         link = article.select_one("header h1 a")
         desc = article.select_one("div p")

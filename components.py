@@ -59,7 +59,7 @@ class SearchBar(ui.column):
         print(f"Selected modules: {selected_modules}")
         SearchResults.refresh()
         mods = utils.getModulesRefs()
-        full_res = {"titles": [], "links": [], "images": [], "descriptions": [], "origin": [], "modId": []}
+        full_res = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": [], "origin": [], "modId": []}
         for selected_module in selected_modules:
             for mod in mods:
                 if selected_module == mod['id']:
@@ -78,8 +78,10 @@ class SearchBar(ui.column):
                         full_res['links'].append(res['links'])
                         full_res['images'].append(res['images'])
                         full_res['descriptions'].append(res['descriptions'])
+                        full_res['badges'].append(res['badges'])
                         full_res['origin'].append(mod['display_name'])
                         full_res['modId'].append(mod['id'])
+        print(full_res)
         app.storage.user['search_results'] = full_res
         SearchResults.refresh()
 
@@ -89,13 +91,14 @@ class SearchResults(ui.grid):
         super().__init__(rows=rows, columns=columns)
         self.classes('w-full grid-cols-1 sm:grid-cols-3 lg:grid-cols-5')
         try:
-            if (len(app.storage.user['search_results']['titles'][0]) != 0):
+            if utils.has_nested_value(app.storage.user['search_results']):
                 with self:
                     for i in range(0, len(app.storage.user['search_results']['titles'])):
                         titles = app.storage.user['search_results']['titles'][i]
                         descriptions = app.storage.user['search_results']['descriptions'][i]
                         images = app.storage.user['search_results']['images'][i]
                         links = app.storage.user['search_results']['links'][i]
+                        badges = app.storage.user['search_results']['badges'][i]
                         origin = app.storage.user['search_results']['origin'][i]
                         modId = app.storage.user['search_results']['modId'][i]
                         mod = utils.getModuleById(modId)
@@ -108,7 +111,8 @@ class SearchResults(ui.grid):
                                     ui.button(text="Select link", on_click=lambda m=modId, t=links[x]: self.open_internal_page(str(m), t)).classes('w-full text-center')
                                 else:
                                     with ui.link(target=links[x], new_tab=True).classes('w-full h-full'):
-                                        ui.image(source=images[x]).classes('object-scale-down')
+                                        if images[x] != 'NULL':
+                                            ui.image(source=images[x]).classes('object-scale-down')
                                         if (descriptions[x] != 'NULL'):
                                             ui.label(text=descriptions[x])
             else:

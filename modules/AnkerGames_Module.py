@@ -36,7 +36,7 @@ def getLinks(search, url):
     url += search
     soup = getSoup(url)
     games = soup.select("div.grid:nth-child(6)")
-    results = {"titles": [], "links": [], "images": [], "descriptions": []}
+    results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
     for game in games:
         for article in game.find_all("article"):
             results['titles'].append(article.get('title') or 'NULL')
