@@ -56,7 +56,11 @@ def getLinks(search, url):
         results['titles'].append(link.text or 'NULL')
         results['links'].append(MODULE_INFO['base_url'].replace("/vault/?p=list&q=", "") + link.get('href') or 'NULL')
         results['images'].append('NULL')
-        results['descriptions'].append(tr.text or 'NULL')
+        full_description = ""
+        for td in tr.find_all('td'):
+            full_description += td.text + " - "
+        full_description = full_description.replace(" - 9", " - ")
+        results['descriptions'].append(full_description or 'NULL')
         img = tr.find('img')
         if not img:
             results['badges'].append('NULL')
