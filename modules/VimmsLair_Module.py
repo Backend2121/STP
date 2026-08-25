@@ -1,12 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
-from nicegui import ui
-
 
 MODULE_INFO = {
     'id': 'vimmslair',
     'display_name': 'Vimm\'s Lair',
-    'base_url': 'https://vimm.net/vault/?p=list&q=',
+    'base_url': 'https://z-library.ec/s/',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': False,
@@ -44,9 +42,9 @@ def getLinks(search, url):
     print(f"Searching for {url}")
     soup = getSoup(url)
     if not soup: return
+    results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
     table = soup.find_all('table')[0]
     table_entries = table.select("tr")
-    results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
     for tr in table_entries:
         try:
             link = tr.find_all("a")[1]
