@@ -55,8 +55,23 @@ def getLinks(search, url):
     soup = BeautifulSoup(html, "html.parser")
     if not soup: return
     results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
-    print(soup.prettify())
-    
+    resultContainer = soup.find_all("div", {"id": "searchResultBox"})[0]
+    books = resultContainer.select("div.book-item")
+    for book in books:
+        results['images'].append(book.find_all('img')[0].get('data-src', default="https://z-lib.sk/img/cover-not-exists.png"))
+        results['titles'].append(book.find_all("div", {"slot": "title"})[0].text)
+        z_bookcard = book.find_all("z-bookcard")[0]
+        results['links'].append("https://z-lib.sk/" + str(z_bookcard.get('href')))
+        results['descriptions'].append(
+            str(z_bookcard.get('isbn')) + ' - ' + 
+            str(z_bookcard.get('publisher')) + ' - ' + 
+            str(z_bookcard.get('language')) + ' - ' + 
+            str(z_bookcard.get('year')) + ' - ' +
+            str(z_bookcard.get('extension')) + ' - ' +
+            str(z_bookcard.get('filesize')) + ' - ' +
+            str(z_bookcard.get('rating')) + ' - ' +
+            str(z_bookcard.get('quality')))
+        results['badges'].append('NULL')
     return results
 
 def getModuleInfo():
