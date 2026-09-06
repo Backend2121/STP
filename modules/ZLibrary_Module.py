@@ -10,7 +10,7 @@ MODULE_INFO = {
     'base_url': 'https://z-lib.sk/s/',
     'enabled': True,
     'version': '1.0.0',
-    'internal_page': False,
+    'internal_page': True,
     'requires_extension': True,
     'icon': 'sports_esports',
     'color': '#1e88e5',
@@ -27,9 +27,16 @@ def build_link(search):
     url = MODULE_INFO['base_url'] + search
     return url
 
-def displayInternalPage(selectedUrl: str):
+def internalPage(selectedUrl: str):
     """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
-    pass
+    html = None
+    while html == None:
+        html = utils.get_cached_html(url=selectedUrl.replace(" ", "%20"))
+        print(f"Looking for {selectedUrl.replace(" ", "%20")} key")
+        time.sleep(0.5)
+    soup = BeautifulSoup(html, "html.parser")
+    link = soup.find_all("a", {"class": "btn btn-default dlButton addDownloadedBook"})[0]
+    return("https://z-lib.sk/" + str(link.get('href')))
 
 def getSoup(website: str) -> BeautifulSoup | None:
     """Given an url, return the soup of it using requests"""
@@ -48,7 +55,6 @@ def getLinks(search, url):
     print(f"Searching for {url}")
     html = None
     while html == None:
-        print(f"Searching for {url.replace(" ", "%20")}")
         html = utils.get_cached_html(url=url.replace(" ", "%20"))
         time.sleep(0.5)
     utils.delete_cached_html(MODULE_INFO['base_url'])

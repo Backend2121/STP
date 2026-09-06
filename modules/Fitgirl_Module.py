@@ -21,7 +21,7 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:10.0) Gecko/20100101 Firefox/10.0',
 }
 
-def displayInternalPage(selectedUrl: str):
+def internalPage(selectedUrl: str):
     """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
     soup = getSoup(selectedUrl)
     if not soup: return

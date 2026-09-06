@@ -5,6 +5,7 @@ from urllib.parse import quote
 loaded_modules = []
 loaded_modules_metadata = []
 _html_cache: dict[str, str] = {}
+uiNavigatorLock = False
 
 def print_cached_html():
     print(_html_cache)
@@ -14,6 +15,7 @@ def get_cached_html(url: str) -> str | None:
 
 def cache_html(url: str, html: str) -> None:
     _html_cache[url] = html
+    uiNavigatorLock = False
     print_cached_html()
 
 def delete_cached_html(url: str) -> bool:

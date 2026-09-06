@@ -15,7 +15,6 @@ class API_HtmlPage(BaseModel):
 def get_html_page(page: API_HtmlPage):
     url = page.url.replace("#stp-capture", "")
     utils.cache_html(url, page.html)
-    print(f"Saved {url} as key")
     return {'URL': url, 'HTML': page.html}
 #endregion
 

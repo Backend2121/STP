@@ -133,7 +133,23 @@ class SearchResults(ui.grid):
             print(e)
             pass
     
-    def open_internal_page(self, modId:str, target:str):
+    async def open_internal_page(self, modId:str, target:str):
         mod = utils.getModuleById(modId)
-        if mod and mod['internal_page'] == True:
-            mod['mod'].displayInternalPage(selectedUrl=target)
+        if mod and mod['internal_page'] == True:     
+            res = None
+            try:
+                if mod['requires_extension']:
+                    ui.navigate.to(target + "#stp-capture", new_tab=True)
+                res = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
+                print(res)
+            except asyncio.TimeoutError:
+                ui.notify(f"Timeout for {mod['id']}",type='negative')
+            if res:
+                with ui.dialog() as dialog:
+                    with ui.card().classes("w-[80%] h-[80%] relative"):
+                        with ui.card().classes('sticky top-0 right-0 z-10 w-full flex-row justify-end gap-1 ml-auto'):
+                            ui.button(icon='close', on_click=dialog.close).props('flat round dense')
+                            ui.button(icon='open_in_new', on_click=lambda: ui.navigate.to(target, new_tab=True)).props('flat round dense')
+                        with ui.column():
+                            ui.link(text=res, target=res, new_tab=True)
+                dialog.open()
