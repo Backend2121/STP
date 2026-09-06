@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 import requests
 from bs4 import BeautifulSoup
 from nicegui import ui
@@ -35,8 +37,43 @@ def internalPage(selectedUrl: str):
         print(f"Looking for {selectedUrl.replace(" ", "%20")} key")
         time.sleep(0.5)
     soup = BeautifulSoup(html, "html.parser")
-    link = soup.find_all("a", {"class": "btn btn-default dlButton addDownloadedBook"})[0]
-    return("https://z-lib.sk/" + str(link.get('href')))
+    
+    title_el = soup.select_one('h1.book-title')
+    title = title_el.get_text(strip=True) if title_el else 'Unknown'
+
+    img_el = soup.select_one('z-cover img')
+    image = str(img_el.get('src')) if img_el and str(img_el.get('src')) else None
+    details: dict[str, str] = {}
+ 
+    author_el = soup.select_one('i.authors a')
+    if author_el:
+        details['Author'] = author_el.get_text(strip=True)
+ 
+    for prop in soup.select('.bookDetailsBox .bookProperty'):
+        label_el = prop.select_one('.property_label')
+        value_el = prop.select_one('.property_value')
+        if label_el and value_el:
+            label = label_el.get_text(strip=True).rstrip(':')
+            value = value_el.get_text(strip=True)
+            details[label] = value
+    links: list[utils.DownloadLink] = []
+ 
+    main_dl = soup.select_one('a.dlButton.addDownloadedBook[href^="/dl/"]')
+    if main_dl and main_dl.get('href'):
+        ext_el = main_dl.select_one('.book-property__extension')
+        ext = ext_el.get_text(strip=True).upper() if ext_el else 'FILE'
+        full_text = main_dl.get_text(strip=True)
+        size = full_text.split(',', 1)[1].strip() if ',' in full_text else ''
+        label = f'{ext} - {size}' if size else ext
+        links.append(utils.DownloadLink(label=label, url=urljoin("https://z-lib.sk/", str(main_dl['href']))))
+    return utils.DownloadInfo(
+        title=title,
+        image=image,
+        description=None,
+        details=details,
+        links=links,
+        source_url=selectedUrl,
+    )
 
 def getSoup(website: str) -> BeautifulSoup | None:
     """Given an url, return the soup of it using requests"""

@@ -136,20 +136,52 @@ class SearchResults(ui.grid):
     async def open_internal_page(self, modId:str, target:str):
         mod = utils.getModuleById(modId)
         if mod and mod['internal_page'] == True:     
-            res = None
+            info = None
             try:
                 if mod['requires_extension']:
                     ui.navigate.to(target + "#stp-capture", new_tab=True)
-                res = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
-                print(res)
+                info = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
             except asyncio.TimeoutError:
                 ui.notify(f"Timeout for {mod['id']}",type='negative')
-            if res:
+            if info and isinstance(info, utils.DownloadInfo):
                 with ui.dialog() as dialog:
-                    with ui.card().classes("w-[80%] h-[80%] relative"):
-                        with ui.card().classes('sticky top-0 right-0 z-10 w-full flex-row justify-end gap-1 ml-auto'):
+                    with ui.card().classes('w-[80%] h-[80%] relative overflow-y-auto p-0'):
+            
+                        # Header
+                        with ui.card().classes(
+                            'sticky top-0 right-0 z-10 w-full flex-row justify-end gap-1 m-0'
+                        ):
                             ui.button(icon='close', on_click=dialog.close).props('flat round dense')
-                            ui.button(icon='open_in_new', on_click=lambda: ui.navigate.to(target, new_tab=True)).props('flat round dense')
-                        with ui.column():
-                            ui.link(text=res, target=res, new_tab=True)
+                            if info.source_url:
+                                ui.button(
+                                    icon='open_in_new',
+                                    on_click=lambda: ui.navigate.to(str(info.source_url), new_tab=True),
+                                ).props('flat round dense')
+                        # The rest
+                        with ui.column().classes('w-full p-4 gap-3 items-center'):
+            
+                            if info.image:
+                                ui.image(info.image).classes('max-w-full max-h-64').props('fit=scale-down')
+                            else:
+                                ui.icon('image_not_supported', size='xl').classes('text-gray-400')
+            
+                            ui.label(info.title).classes('text-2xl font-bold text-center')
+            
+                            if info.description:
+                                ui.label(info.description).classes('text-center text-gray-600')
+            
+                            if info.details:
+                                with ui.grid(columns=2).classes('w-full max-w-md gap-x-4 gap-y-1'):
+                                    for label, value in info.details.items():
+                                        ui.label(label).classes('font-semibold text-right')
+                                        ui.label(value)
+            
+                            if info.links:
+                                with ui.row().classes('w-full flex-wrap justify-center gap-2 mt-2'):
+                                    for link in info.links:
+                                        ui.button(
+                                            link.label,
+                                            icon='download',
+                                            on_click=lambda _, l=link: ui.navigate.to(l.url, new_tab=True),
+                                        )
                 dialog.open()

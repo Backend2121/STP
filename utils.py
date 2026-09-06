@@ -1,11 +1,26 @@
 import importlib
+from typing import Optional
 from urllib.parse import quote
-
+from dataclasses import dataclass, field
 
 loaded_modules = []
 loaded_modules_metadata = []
 _html_cache: dict[str, str] = {}
 uiNavigatorLock = False
+
+@dataclass
+class DownloadLink:
+    label: str
+    url: str
+
+@dataclass
+class DownloadInfo:
+    title: str
+    image: Optional[str] = None
+    description: Optional[str] = None
+    details: dict[str, str] = field(default_factory=dict)
+    links: list[DownloadLink] = field(default_factory=list)
+    source_url: Optional[str] = None  # pagina originale, per "open_in_new"
 
 def print_cached_html():
     print(_html_cache)
