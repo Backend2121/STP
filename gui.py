@@ -1,8 +1,23 @@
 from nicegui import ui, app
+from pydantic import BaseModel
 from components import SearchBar, SearchResults, Header
 import utils
 
 imported_modules = []
+
+#region API
+
+class API_HtmlPage(BaseModel):
+    url: str
+    html: str
+
+@app.post('/api/eb')
+def get_html_page(page: API_HtmlPage):
+    url = page.url.replace("#stp-capture", "")
+    utils.cache_html(url, page.html)
+    print(f"Saved {url} as key")
+    return {'URL': url, 'HTML': page.html}
+#endregion
 
 @ui.page('/settings')
 def settings_page():

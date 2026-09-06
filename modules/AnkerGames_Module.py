@@ -8,14 +8,13 @@ MODULE_INFO = {
     'enabled': True,
     'version': '1.0.0',
     'internal_page': False,
+    'requires_extension': False,
     'icon': 'sports_esports',
     'color': '#1e88e5',
     'timeout': 10,
     'rate_limit_seconds': 1.0,
     'direct_link': False
 }
-
-xpath = "/html/body/div[2]/main/div/div/div[6]"
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X x.y; rv:10.0) Gecko/20100101 Firefox/10.0',

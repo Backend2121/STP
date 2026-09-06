@@ -67,7 +67,18 @@ class SearchBar(ui.column):
                         ui.spinner(size='lg')
                         ui.label('Loading...').classes('text-2xl font-bold')
                     try:
-                        res = await asyncio.wait_for(run.cpu_bound(mod['mod'].getLinks, query, mod['base_url']), timeout=mod['timeout'])
+                        if mod['requires_extension'] == True:
+                            with ui.dialog() as dialog, ui.card():
+                                ui.label("Do you want to open the module's target website to solve Cloudflare's challenge?\n (Required to fetch results)")
+                                with ui.row():
+                                    ui.button('Yes', on_click=lambda: dialog.submit('Yes'))
+                                    ui.button('No', on_click=lambda: dialog.submit('No'))
+                            if await dialog == 'Yes':
+                                link = mod['mod'].build_link(query)
+                                ui.navigate.to(link + "#stp-capture", new_tab=True)
+                            else:
+                                continue
+                        res = await asyncio.wait_for(run.io_bound(mod['mod'].getLinks, query, mod['base_url']), timeout=mod['timeout'])
                         row.clear()
                     except asyncio.TimeoutError:
                         row.clear()

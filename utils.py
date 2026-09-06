@@ -1,7 +1,29 @@
 import importlib
+from urllib.parse import quote
+
 
 loaded_modules = []
 loaded_modules_metadata = []
+_html_cache: dict[str, str] = {}
+
+def print_cached_html():
+    print(_html_cache)
+
+def get_cached_html(url: str) -> str | None:
+    return _html_cache.get(url, None)
+
+def cache_html(url: str, html: str) -> None:
+    _html_cache[url] = html
+    print_cached_html()
+
+def delete_cached_html(url: str) -> bool:
+    removed = _html_cache.pop(url, '')
+    if removed == '':
+        return False
+    return True
+
+def convert_to_html_string(query:str) -> str:
+    return quote(query)
 
 def has_nested_value(d: dict) -> bool:
     return any(
