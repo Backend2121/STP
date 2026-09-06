@@ -30,7 +30,7 @@ def build_link(search):
     return url
 
 def internalPage(selectedUrl: str):
-    """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
+    """Function used to return an instance of DownloadInfo (eg. for multiple links/mirrors) called after selecting a result from the main page"""
     html = None
     while html == None:
         html = utils.get_cached_html(url=selectedUrl.replace(" ", "%20"))
