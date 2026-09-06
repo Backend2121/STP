@@ -43,6 +43,9 @@ def internalPage(selectedUrl: str):
 
     img_el = soup.select_one('z-cover img')
     image = str(img_el.get('src')) if img_el and str(img_el.get('src')) else None
+    if image and 'cover-not-exists.png' in image:
+        image = "https://z-lib.sk" + image
+    
     details: dict[str, str] = {}
  
     author_el = soup.select_one('i.authors a')
@@ -101,7 +104,11 @@ def getLinks(search, url):
     resultContainer = soup.find_all("div", {"id": "searchResultBox"})[0]
     books = resultContainer.select("div.book-item")
     for book in books:
-        results['images'].append(book.find_all('img')[0].get('data-src', default="https://z-lib.sk/img/cover-not-exists.png"))
+        image = book.find_all('img')[0].get('data-src', default="https://z-lib.sk/img/cover-not-exists.png")
+        if 'cover-not-exists.png' in str(image):
+            results['images'].append("https://z-lib.sk/img/cover-not-exists.png")
+        else:
+            results['images'].append(image)
         results['titles'].append(book.find_all("div", {"slot": "title"})[0].text)
         z_bookcard = book.find_all("z-bookcard")[0]
         results['links'].append("https://z-lib.sk/" + str(z_bookcard.get('href')))
