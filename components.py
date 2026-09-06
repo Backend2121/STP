@@ -112,13 +112,13 @@ class SearchResults(ui.grid):
                         badges = app.storage.user['search_results']['badges'][i]
                         origin = app.storage.user['search_results']['origin'][i]
                         modId = app.storage.user['search_results']['modId'][i]
-                        print(images)
                         mod = utils.getModuleById(modId)
                         for x in range(0, len(titles)):
                             with ui.card():
                                 with ui.row(align_items='center').classes('w-full justify-between'):
                                     ui.label(text=titles[x]).classes('text-xl')
                                     ui.badge(text=origin).classes("py-2 text-center")
+                                    ui.badge(text=badges[x]).classes("py-2 text-center")
                                 if mod and mod['internal_page'] == True:
                                     if images[x] != 'NULL':
                                         ui.image(source=images[x]).classes('object-scale-down')
