@@ -35,6 +35,7 @@ def settings_page():
     Header(dark=dark)
     with ui.column().classes('w-full'):
         ui.select(options=options, multiple=True, label="Modules").classes('w-[50%]').props('use-chips').bind_value(app.storage.user, 'selected_modules')
+        ui.checkbox(text="Skip extension confirmation", value=False).bind_value(app.storage.user, 'skip_extension_confirmation').tooltip("Disables/Enables confirmation for opening a new tab for modules that require STP's web extension")
 
 @ui.page('/')
 def home_page():

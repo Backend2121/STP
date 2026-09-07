@@ -67,18 +67,22 @@ class SearchBar(ui.column):
                         ui.spinner(size='lg')
                         ui.label('Loading...').classes('text-2xl font-bold')
                     try:
-                        if mod['requires_extension'] == True:
-                            with ui.dialog() as dialog, ui.card():
-                                ui.label("Do you want to open the module's target website to solve Cloudflare's challenge?\n (Required to fetch results)")
-                                with ui.row():
-                                    ui.button('Yes', on_click=lambda: dialog.submit('Yes'))
-                                    ui.button('No', on_click=lambda: dialog.submit('No'))
-                            if await dialog == 'Yes':
+                        if mod['requires_extension']:
+                            if not app.storage.user['skip_extension_confirmation']:
+                                with ui.dialog() as dialog, ui.card():
+                                    ui.label("Do you want to open the module's target website to solve Cloudflare's challenge?\n (Required to fetch results)")
+                                    with ui.row():
+                                        ui.button('Yes', on_click=lambda: dialog.submit('Yes'))
+                                        ui.button('No', on_click=lambda: dialog.submit('No'))
+                                if await dialog == 'Yes':
+                                    link = mod['mod'].build_link(query)
+                                    ui.navigate.to(link + "#stp-capture", new_tab=True)
+                            else:
                                 link = mod['mod'].build_link(query)
                                 ui.navigate.to(link + "#stp-capture", new_tab=True)
-                            else:
-                                # If the user chooses 'NO' the module is simply skipped
-                                continue
+                        else:
+                            # If the user chooses 'NO' the module is simply skipped
+                            continue
                         res = await asyncio.wait_for(run.io_bound(mod['mod'].getLinks, query, mod['base_url']), timeout=mod['timeout'])
                         row.clear()
                     except asyncio.TimeoutError:
@@ -118,7 +122,8 @@ class SearchResults(ui.grid):
                                 with ui.row(align_items='center').classes('w-full justify-between'):
                                     ui.label(text=titles[x]).classes('text-xl')
                                     ui.badge(text=origin).classes("py-2 text-center")
-                                    ui.badge(text=badges[x]).classes("py-2 text-center")
+                                    if badges[x] != 'NULL':
+                                        ui.badge(text=badges[x]).classes("py-2 text-center")
                                 if mod and mod['internal_page'] == True:
                                     if images[x] != 'NULL':
                                         ui.image(source=images[x]).classes('object-scale-down')
@@ -142,14 +147,25 @@ class SearchResults(ui.grid):
             info = None
             try:
                 if mod['requires_extension']:
-                    ui.navigate.to(target + "#stp-capture", new_tab=True)
+                    if not app.storage.user['skip_extension_confirmation']:
+                        with ui.dialog() as dialog, ui.card():
+                            ui.label("Do you want to open the module's target website to solve Cloudflare's challenge?\n (Required to fetch results)")
+                            with ui.row():
+                                ui.button('Yes', on_click=lambda: dialog.submit('Yes'))
+                                ui.button('No', on_click=lambda: dialog.submit('No'))
+                        if await dialog == 'Yes':
+                            ui.navigate.to(target + "#stp-capture", new_tab=True)
+                    else:
+                        ui.navigate.to(target + "#stp-capture", new_tab=True)
+                else:
+                    # If the user chooses 'NO' the module is simply skipped
+                    return
                 info = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
             except asyncio.TimeoutError:
                 ui.notify(f"Timeout for {mod['id']}",type='negative')
             if info and isinstance(info, utils.DownloadInfo):
                 with ui.dialog() as dialog:
                     with ui.card().classes('w-[80%] h-[80%] relative overflow-y-auto p-0'):
-            
                         # Header
                         with ui.card().classes(
                             'sticky top-0 right-0 z-10 w-full flex-row justify-end gap-1 m-0'
