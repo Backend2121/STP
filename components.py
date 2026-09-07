@@ -1,29 +1,38 @@
 import asyncio
 from typing import Literal
-from nicegui import Client, ui, app, run, events
+from nicegui import Client, ui, app, run, observables
 import utils
 
 class Header(ui.element):
-    def __init__(self, tag: str | None = None, *, _client: Client | None = None, dark) -> None:
+    def __init__(self, tag: str | None = None, *, _client: Client | None = None, dark, subPageText: str) -> None:
         super().__init__(tag, _client=_client)
         with ui.header().classes('items-center justify-between'):
+            with ui.row():
                 ui.label('Simple Things Provider').classes('text-xl cursor-pointer').on('click', lambda: ui.navigate.to('/'))
-                with ui.row(align_items='center'):
-                    ui.button('toggle', icon='dark_mode', on_click=dark.toggle)
-                    ui.button(on_click=lambda: right_drawer.toggle(), icon='menu').props('flat color=white')
+                ui.label(f'{subPageText}').classes('text-lg').style('opacity: 0.50')
+            with ui.row(align_items='center'):
+                ui.button('toggle', icon='dark_mode', on_click=dark.toggle)
+                ui.button(on_click=lambda: right_drawer.toggle(), icon='menu').props('flat color=white')
 
         with ui.right_drawer(fixed=False).props('bordered') as right_drawer:
             with ui.list().classes('w-full'):
-                with ui.item(on_click=lambda: ui.navigate.to('/')).classes('cursor-pointer'):
-                    with ui.item_section().props('avatar'):
-                        ui.icon('home')
-                    with ui.item_section():
-                        ui.item_label('Home')
-                with ui.item(on_click=lambda: ui.navigate.to('/settings')).classes('cursor-pointer'):
-                    with ui.item_section().props('avatar'):
-                        ui.icon('settings')
-                    with ui.item_section():
-                        ui.item_label('Settings')
+                self.buildDrawerItem(target="/", icon='home', label='Home')
+                selected_extensions: observables.ObservableList = app.storage.user['selected_extensions']
+                SearchResults.refresh()
+                exts = utils.getExtensionsRefs()
+                selected_extensions.sort()
+                for selected_extension in selected_extensions:
+                    for ext in exts:
+                        if selected_extension == ext['id']:
+                            self.buildDrawerItem(target=ext['base_url'], icon=ext['icon'], label=ext['display_name'])
+                self.buildDrawerItem(target="/settings", icon='settings', label='Settings')
+
+    def buildDrawerItem(self, target: str, icon: str, label: str):
+        with ui.item(on_click=lambda: ui.navigate.to(target=target)).classes('cursor-pointer'):
+            with ui.item_section().props('avatar'):
+                ui.icon(icon)
+            with ui.item_section():
+                ui.item_label(label)
 
 class SearchBar(ui.column):
     def __init__(self, *, wrap: bool = False, align_items: None | Literal['start'] | Literal['end'] | Literal['center'] | Literal['baseline'] | Literal['stretch'] = None) -> None:
@@ -80,9 +89,8 @@ class SearchBar(ui.column):
                             else:
                                 link = mod['mod'].build_link(query)
                                 ui.navigate.to(link + "#stp-capture", new_tab=True)
-                        else:
-                            # If the user chooses 'NO' the module is simply skipped
-                            continue
+                                pass
+                        print(f"Starting module {mod['display_name']}")
                         res = await asyncio.wait_for(run.io_bound(mod['mod'].getLinks, query, mod['base_url']), timeout=mod['timeout'])
                         row.clear()
                     except asyncio.TimeoutError:
@@ -97,6 +105,7 @@ class SearchBar(ui.column):
                         full_res['badges'].append(res['badges'])
                         full_res['origin'].append(mod['display_name'])
                         full_res['modId'].append(mod['id'])
+                    row.delete()
         app.storage.user['search_results'] = full_res
         SearchResults.refresh()
 
@@ -123,7 +132,10 @@ class SearchResults(ui.grid):
                                     ui.label(text=titles[x]).classes('text-xl')
                                     ui.badge(text=origin).classes("py-2 text-center")
                                     if badges[x] != 'NULL':
-                                        ui.badge(text=badges[x]).classes("py-2 text-center")
+                                        if badges[x].endswith((".png", ".jpg", ".jpeg", ".gif")):
+                                            ui.image(source=badges[x]).classes("max-h-8 max-w-8 object-scale-down")
+                                        else:
+                                            ui.badge(text=badges[x]).classes("py-2 text-center")
                                 if mod and mod['internal_page'] == True:
                                     if images[x] != 'NULL':
                                         ui.image(source=images[x]).classes('object-scale-down')

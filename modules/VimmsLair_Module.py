@@ -62,7 +62,7 @@ def getLinks(search, url):
         if not img:
             results['badges'].append('NULL')
         else:
-            results['badges'].append(img.get('src'))
+            results['badges'].append("https://vimm.net/" + str(img.get('src')))
     return results
 
 def getModuleInfo():

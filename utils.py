@@ -1,10 +1,15 @@
 import importlib
+import os
 from typing import Optional
 from urllib.parse import quote
 from dataclasses import dataclass, field
 
 loaded_modules = []
 loaded_modules_metadata = []
+
+loaded_extensions = []
+loaded_extensions_metadata = []
+
 _html_cache: dict[str, str] = {}
 
 @dataclass
@@ -54,9 +59,18 @@ def getModuleById(modId: str):
         if modId == mod['id']:
             return mod
 
-def loadModules(modules: list):
+def loadModules():
     global loaded_modules
     global loaded_modules_metadata
+    
+    cwd = os.getcwd() + '/'
+    modules_directory = cwd + 'modules'
+    files_in_modules_directory = os.listdir(modules_directory)
+    modules = []
+    for file in files_in_modules_directory:
+        if 'Module.py' in file:
+            modules.append(file.replace('.py', ''))
+    
     for module in modules:
         mod = importlib.import_module(f'modules.{module}')
         module_metadata = mod.getModuleInfo()
@@ -72,3 +86,31 @@ def getModulesMetadata() -> list[dict]:
 def getModulesRefs() -> list[dict]:
     global loaded_modules
     return loaded_modules
+
+def loadExtensions():
+    global loaded_extensions
+    global loaded_extensions_metadata
+    
+    cwd = os.getcwd() + '/'
+    extensions_directory = cwd + 'extensions'
+    files_in_extensions_directory = os.listdir(extensions_directory)
+    extensions = []
+    for file in files_in_extensions_directory:
+        if file.endswith("Extension.py"):
+            extensions.append(file.replace('.py', ''))
+    
+    for extension in extensions:
+        ext = importlib.import_module(f'extensions.{extension}')
+        extension_metadata = ext.getExtensionInfo()
+        loaded_extensions_metadata.append(extension_metadata.copy())
+        
+        extension_metadata.update({'ext': ext})
+        loaded_extensions.append(extension_metadata)
+        
+def getExtensionsMetadata() -> list[dict]:
+    global loaded_extensions_metadata
+    return loaded_extensions_metadata
+
+def getExtensionsRefs() -> list[dict]:
+    global loaded_extensions
+    return loaded_extensions

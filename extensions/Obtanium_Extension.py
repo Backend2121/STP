@@ -1,32 +1,26 @@
-import requests
-import asyncio
-import utils
-from nicegui import ui, app, run
+from nicegui import ui, app
 from components import Header
 
 EXTENSION_INFO = {
-    'id': 'website_status_checker',
-    'display_name': 'Website status checker',
-    'base_url': '/website_status_checker',
+    'id': 'obtanium',
+    'display_name': 'Obtanium',
+    'base_url': '/obtanium',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': False,
     'requires_extension': False,
-    'icon': 'domain',
+    'icon': 'download',
     'color': '#1e88e5',
     'timeout': 10,
     'rate_limit_seconds': 1.0,
     'direct_link': False
 }
- 
+
 @ui.page(EXTENSION_INFO['base_url'])
 def extensionPage():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     Header(dark=dark, subPageText=EXTENSION_INFO['display_name'])
-    
-    modules_metadata = utils.getModulesMetadata()
-    
     with ui.label(EXTENSION_INFO['display_name']):
         pass
 
