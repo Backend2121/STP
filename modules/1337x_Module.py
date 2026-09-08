@@ -3,7 +3,6 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
-from nicegui import ui
 import utils
 import time
 from utils import DownloadInfo, DownloadLink
@@ -13,6 +12,7 @@ MODULE_INFO = {
     'id': '1337x',
     'display_name': '1337x',
     'base_url': 'https://1337x.to/search/',
+    'website': 'https://1337x.to/',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': True,

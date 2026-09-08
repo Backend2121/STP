@@ -5,6 +5,7 @@ MODULE_INFO = {
     'id': 'ankergames',
     'display_name': 'AnkerGames',
     'base_url': 'https://ankergames.net/search/',
+    'website': 'https://ankergames.net/',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': False,

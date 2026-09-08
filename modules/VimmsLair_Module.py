@@ -5,6 +5,7 @@ MODULE_INFO = {
     'id': 'vimmslair',
     'display_name': 'Vimm\'s Lair',
     'base_url': 'https://vimm.net/vault/?p=list&q=',
+    'website': 'https://vimm.net/vault/',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': False,

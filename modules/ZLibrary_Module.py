@@ -10,6 +10,7 @@ MODULE_INFO = {
     'id': 'zlibrary',
     'display_name': 'Z-Library',
     'base_url': 'https://z-lib.sk/s/',
+    'website': 'https://z-lib.sk/',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': True,

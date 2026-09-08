@@ -9,6 +9,7 @@ MODULE_INFO = {
     'id': 'fitgirl',
     'display_name': 'Fitgirl',
     'base_url': 'https://fitgirl-repacks.site/?s=',
+    'website': 'https://fitgirl-repacks.site/',
     'enabled': True,
     'version': '1.0.0',
     'internal_page': True,
