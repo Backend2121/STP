@@ -16,17 +16,18 @@ _html_cache: dict[str, str] = {}
 class ErrorCode(IntEnum):
     """Enum for error codes -> mapped by ERROR_REGISTRY"""
     WEBSITE_PARSE_FAILED = 100
-    EMPTY_RESPONSE = 101
-    PARTIAL_PARSE_FAILURE = 102
-    INVALID_MODULE = 103
-    TIMEOUT = 104
-    FORBIDDEN = 105
- 
+    CORE_PARSING_FAILED = 101
+    EMPTY_RESPONSE = 102
+    PARTIAL_PARSE_FAILED = 103
+    INVALID_MODULE = 104
+    TIMEOUT = 105
+    FORBIDDEN = 106
 
 ERROR_REGISTRY: dict[ErrorCode, tuple[int, str]] = {
     ErrorCode.WEBSITE_PARSE_FAILED: (3, "Failed to fetch the page"),
+    ErrorCode.CORE_PARSING_FAILED: (3, "Failed to parse main content"),
     ErrorCode.EMPTY_RESPONSE: (3, "The server returned an empty response"),
-    ErrorCode.PARTIAL_PARSE_FAILURE: (2, "Some results could not be parsed"),
+    ErrorCode.PARTIAL_PARSE_FAILED: (2, "Some results could not be parsed"),
     ErrorCode.INVALID_MODULE: (3, "The requested module does not exist"),
     ErrorCode.TIMEOUT: (2, "The request timed out"),
     ErrorCode.FORBIDDEN: (3, "Access forbidden - VPN may be required"),

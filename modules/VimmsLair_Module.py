@@ -1,5 +1,10 @@
+from typing import Optional
+
 import requests
 from bs4 import BeautifulSoup
+
+from utils import Error, ErrorCode
+
 
 MODULE_INFO = {
     'id': 'vimmslair',
@@ -37,22 +42,34 @@ def getSoup(website: str) -> BeautifulSoup | None:
         print(e)
         return None
 
-def getLinks(search, url):
+def getLinks(search, url) -> tuple[dict, Optional[Error]]:
     url += search
-    print(f"Searching for {url}")
-    soup = getSoup(url)
-    if not soup: return
     results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
-    table = soup.find_all('table')[0]
-    table_entries = table.select("tr")
+
+    try:
+        soup = getSoup("Putul")
+    except Exception as e:
+        return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'], exception=e)
+    if not soup: return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'])
+    try:
+        table = soup.find_all('table')[0]
+        table_entries = table.select("tr")
+    except Exception as e:
+        return results, Error.from_code(ErrorCode.CORE_PARSING_FAILED, origin=MODULE_INFO['id'], exception=e)
+    skipped = 0
     for tr in table_entries:
         try:
             link = tr.find_all("a")[1]
         except IndexError:
             continue
-        if not link: continue
-        results['titles'].append(link.text or 'NULL')
-        results['links'].append(MODULE_INFO['base_url'].replace("/vault/?p=list&q=", "") + link.get('href') or 'NULL')
+        if not link: 
+            skipped += 1
+        title = link.text or 'NULL'
+        if title == 'NULL': skipped += 1
+        results['titles'].append(title)
+        link = link.get('href')
+        results['links'].append(MODULE_INFO['base_url'].replace("/vault/?p=list&q=", "") + link or 'NULL')
+        if title == 'NULL': skipped += 1
         results['images'].append('NULL')
         full_description = ""
         for td in tr.find_all('td'):
@@ -62,9 +79,10 @@ def getLinks(search, url):
         img = tr.find('img')
         if not img:
             results['badges'].append('NULL')
+            skipped += 1
         else:
             results['badges'].append("https://vimm.net/" + str(img.get('src')))
-    return results
+    return results, None
 
 def getModuleInfo():
     return MODULE_INFO

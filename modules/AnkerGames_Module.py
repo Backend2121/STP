@@ -2,7 +2,7 @@ from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
-from utils import Error, ErrorCode, ERROR_REGISTRY
+from utils import Error, ErrorCode
 
 MODULE_INFO = {
     'id': 'ankergames',
@@ -93,7 +93,7 @@ def getLinks(search, url) -> tuple[dict, Optional[Error]]:
         results['descriptions'].append(description)
         results['badges'].append(badge)
     if skipped != 0:
-        return results, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILURE, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
+        return results, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
     return results, None
 
 def getModuleInfo():
