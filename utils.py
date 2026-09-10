@@ -1,6 +1,7 @@
+from enum import IntEnum
 import importlib
 import os
-from typing import Optional
+from typing import Literal, Optional
 from urllib.parse import quote
 from dataclasses import dataclass, field
 
@@ -11,6 +12,55 @@ loaded_extensions = []
 loaded_extensions_metadata = []
 
 _html_cache: dict[str, str] = {}
+
+class ErrorCode(IntEnum):
+    """Enum for error codes -> mapped by ERROR_REGISTRY"""
+    WEBSITE_PARSE_FAILED = 100
+    EMPTY_RESPONSE = 101
+    PARTIAL_PARSE_FAILURE = 102
+    INVALID_MODULE = 103
+    TIMEOUT = 104
+    FORBIDDEN = 105
+ 
+
+ERROR_REGISTRY: dict[ErrorCode, tuple[int, str]] = {
+    ErrorCode.WEBSITE_PARSE_FAILED: (3, "Failed to fetch the page"),
+    ErrorCode.EMPTY_RESPONSE: (3, "The server returned an empty response"),
+    ErrorCode.PARTIAL_PARSE_FAILURE: (2, "Some results could not be parsed"),
+    ErrorCode.INVALID_MODULE: (3, "The requested module does not exist"),
+    ErrorCode.TIMEOUT: (2, "The request timed out"),
+    ErrorCode.FORBIDDEN: (3, "Access forbidden - VPN may be required"),
+}
+
+@dataclass
+class Error:
+    """
+    1 = Info
+    2 = Warning
+    3 = Error
+    4 = Critical
+    """
+    code: int
+    origin: str
+    severity: int = 1
+    alert_type: Literal[
+               'positive',
+               'negative',
+               'warning',
+               'info',
+               'ongoing',
+           ] = 'info'
+    msg: str = ""
+    exception: str = ""
+    @classmethod
+    def from_code(cls, code: ErrorCode, origin: str, exception: Exception | None = None, msg: Optional[str] = None) -> "Error":
+        severity, default_msg = ERROR_REGISTRY[code]
+        alert_type = 'info'
+        if severity == 1: alert_type = 'info'
+        if severity == 2: alert_type = 'warning'
+        if severity == 3: alert_type = 'negative'
+        if severity == 4: alert_type = 'negative'
+        return cls(code=code, origin=origin, severity=severity, alert_type=alert_type, msg=msg or default_msg, exception=str(exception))
 
 @dataclass
 class DownloadLink:
@@ -24,7 +74,7 @@ class DownloadInfo:
     description: Optional[str] = None
     details: dict[str, str] = field(default_factory=dict)
     links: list[DownloadLink] = field(default_factory=list)
-    source_url: Optional[str] = None  # pagina originale, per "open_in_new"
+    source_url: Optional[str] = None
 
 def print_cached_html():
     print(_html_cache)

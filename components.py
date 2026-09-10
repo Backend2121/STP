@@ -98,6 +98,10 @@ class SearchBar(ui.column):
                         ui.notify(f"Timeout for {mod['id']}",type='negative')
                         continue
                     if res:
+                        res, error = res
+                        if error:
+                            error: utils.Error
+                            ui.notify(message=f"({error.code}) {error.msg} - {error.origin}", type=error.alert_type)
                         full_res['titles'].append(res['titles'])
                         full_res['links'].append(res['links'])
                         full_res['images'].append(res['images'])

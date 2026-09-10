@@ -1,5 +1,8 @@
+from typing import Optional
+
 import requests
 from bs4 import BeautifulSoup
+from utils import Error, ErrorCode, ERROR_REGISTRY
 
 MODULE_INFO = {
     'id': 'ankergames',
@@ -32,28 +35,42 @@ def getSoup(website: str) -> BeautifulSoup:
     soup = BeautifulSoup(r.content, "html.parser")
     return soup
 
-def getLinks(search, url):
+def getLinks(search, url) -> tuple[dict, Optional[Error]]:
     url += search
-    soup = getSoup(url)
-    articles = soup.select('article.group.relative')
     results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
- 
+
+    try:
+        soup = getSoup(url)
+    except Exception as e:
+        return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'], exception=e)
+    articles = soup.select('article.group.relative')
+    skipped = 0
     for article in articles:
         title_el = article.select_one('h3')
         title = (title_el.get('title') or title_el.get_text(strip=True)) if title_el else 'NULL'
- 
+        if title == 'NULL':
+            skipped += 1 
+
         img_el = article.select_one('picture img')
         image = img_el.get('src') if img_el and img_el.get('src') else 'NULL'
- 
+        if title == 'NULL':
+            skipped += 1 
+
         link_el = article.select_one('a[href]')
         link = link_el.get('href') if link_el and link_el.get('href') else 'NULL'
- 
+        if link == 'NULL':
+            skipped += 1 
+
         badge_el = article.select_one('span[class*="bg-green-500"]')
         badge = badge_el.get_text(strip=True) if badge_el else 'NULL'
- 
+        if badge == 'NULL':
+            skipped += 1 
+
         genre_el = article.select_one('p[title]')
         genre = genre_el.get_text(strip=True) if genre_el else ''
- 
+        if genre == '':
+            skipped += 1 
+
         info_el = article.select_one('p[class*="tabular-nums"]')
         info_texts = []
         if info_el:
@@ -62,16 +79,22 @@ def getLinks(search, url):
                 for s in info_el.find_all('span')
                 if s.get_text(strip=True)
             ]
- 
+        if len(info_texts) == 0:
+            skipped += 1 
+
         parts = [p for p in [genre, *info_texts] if p]
-        description = ' • '.join(parts) if parts else 'NULL'
- 
+        description = ' - '.join(parts) if parts else 'NULL'
+        if description == 'NULL':
+            skipped += 1 
+
         results['titles'].append(title)
         results['links'].append(link)
         results['images'].append(image)
         results['descriptions'].append(description)
         results['badges'].append(badge)
-    return results
+    if skipped != 0:
+        return results, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILURE, origin=MODULE_INFO['id'])
+    return results, None
 
 def getModuleInfo():
     return MODULE_INFO
