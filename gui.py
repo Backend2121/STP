@@ -54,8 +54,8 @@ def home_page():
     app.storage.user.setdefault('search_results', {})
     app.storage.user.setdefault('modules', [])
     app.storage.user.setdefault('extensions', [])
-    app.storage.user.setdefault('selected_modules', {})
-    app.storage.user.setdefault('selected_extensions', {})
+    app.storage.user.setdefault('selected_modules', [])
+    app.storage.user.setdefault('selected_extensions', [])
     app.storage.user['modules'] = utils.getModulesMetadata()
     app.storage.user['extensions'] = utils.getExtensionsMetadata()
 

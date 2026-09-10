@@ -20,7 +20,8 @@ class Header(ui.element):
                 selected_extensions: observables.ObservableList = app.storage.user['selected_extensions']
                 SearchResults.refresh()
                 exts = utils.getExtensionsRefs()
-                selected_extensions.sort()
+                if isinstance(selected_extensions, observables.ObservableList):
+                    selected_extensions.sort()
                 for selected_extension in selected_extensions:
                     for ext in exts:
                         if selected_extension == ext['id']:
