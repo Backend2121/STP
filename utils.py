@@ -8,6 +8,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
+import uuid
 
 loaded_modules = []
 loaded_modules_metadata = []
@@ -18,36 +19,6 @@ loaded_extensions_metadata = []
 _html_cache: dict[str, str] = {}
 
 _logger = None
-
-def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
-    # Singleton behaviour
-    global _logger
-    if _logger is not None:
-        return _logger
-
-    Path(log_dir).mkdir(exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_file = Path(log_dir) / f"{name}_{timestamp}.log"
-
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-    logger.propagate = False
-
-    fmt = logging.Formatter(
-        "%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
-    )
-
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setFormatter(fmt)
-    logger.addHandler(file_handler)
-
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(fmt)
-    logger.addHandler(console_handler)
-
-    _logger = logger
-    return _logger
 
 class ErrorCode(IntEnum):
     """Enum for error codes -> mapped by ERROR_REGISTRY"""
@@ -114,6 +85,47 @@ class DownloadInfo:
     links: list[DownloadLink] = field(default_factory=list)
     source_url: Optional[str] = None
 
+def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
+    # Singleton behaviour
+    global _logger
+    if _logger is not None:
+        return _logger
+
+    Path(log_dir).mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = Path(log_dir) / f"{name}_{timestamp}.log"
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.propagate = False
+
+    fmt = logging.Formatter(
+        "%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setFormatter(fmt)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(fmt)
+    logger.addHandler(console_handler)
+
+    _logger = logger
+    return _logger
+
+def getSecret() -> str:
+    log = getLogger()
+    secretPath = (Path(os.getcwd()) / "secret.txt")
+    if not secretPath.exists():
+        log.debug("Creating secret")
+        secretPath.touch(exist_ok=True)
+        secretPath.write_text(str(uuid.uuid4()))
+        log.debug("Successfully created secret")
+    log.debug("Loading secret")
+    return secretPath.read_text()
+
 def print_cached_html():
     print(_html_cache)
 
@@ -151,21 +163,34 @@ def loadModules():
     global loaded_modules
     global loaded_modules_metadata
     
+    log = getLogger()
+    
     cwd = os.getcwd() + '/'
     modules_directory = cwd + 'modules'
     files_in_modules_directory = os.listdir(modules_directory)
     modules = []
     for file in files_in_modules_directory:
-        if 'Module.py' in file:
+        if file.endswith("Module.py"):
             modules.append(file.replace('.py', ''))
     
+    log.debug("Found %d module files in %s", len(modules), modules_directory)
+    log.debug("Importing %d modules", len(modules))
+    
     for module in modules:
+        log.debug("Loading %s.py", module)
         mod = importlib.import_module(f'modules.{module}')
-        module_metadata = mod.getModuleInfo()
-        loaded_modules_metadata.append(module_metadata.copy())
-        
-        module_metadata.update({'mod': mod})
-        loaded_modules.append(module_metadata)
+        log.debug("Successfully loaded %s.py", module)
+        module_metadata = None
+        try:
+            module_metadata = mod.getModuleInfo()
+            loaded_modules_metadata.append(module_metadata.copy())
+        except Exception as e:
+            log.exception("Unable to find getModuleInfo on %s.py", module)
+            return
+
+        if module_metadata:
+            module_metadata.update({'mod': mod})
+            loaded_modules.append(module_metadata)
 
 def getModulesMetadata() -> list[dict]:
     global loaded_modules_metadata
@@ -179,6 +204,8 @@ def loadExtensions():
     global loaded_extensions
     global loaded_extensions_metadata
     
+    log = getLogger()
+    
     cwd = os.getcwd() + '/'
     extensions_directory = cwd + 'extensions'
     files_in_extensions_directory = os.listdir(extensions_directory)
@@ -187,13 +214,22 @@ def loadExtensions():
         if file.endswith("Extension.py"):
             extensions.append(file.replace('.py', ''))
     
+    log.debug("Found %d extension files in %s", len(extensions), extensions_directory)
+    log.debug("Importing %d extensions", len(extensions))
+    
     for extension in extensions:
+        log.debug("Loading %s.py", extension)
         ext = importlib.import_module(f'extensions.{extension}')
-        extension_metadata = ext.getExtensionInfo()
-        loaded_extensions_metadata.append(extension_metadata.copy())
-        
-        extension_metadata.update({'ext': ext})
-        loaded_extensions.append(extension_metadata)
+        log.debug("Loaded %s.py", extension)
+        extension_metadata = None
+        try:
+            extension_metadata = ext.getExtensionInfo()
+            loaded_extensions_metadata.append(extension_metadata.copy())
+        except Exception as e:
+            log.exception("Unable to find getExtensionInfo on %s.py", extension)
+        if extension_metadata:
+            extension_metadata.update({'ext': ext})
+            loaded_extensions.append(extension_metadata)
         
 def getExtensionsMetadata() -> list[dict]:
     global loaded_extensions_metadata
