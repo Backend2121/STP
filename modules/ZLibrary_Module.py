@@ -90,6 +90,9 @@ def internalPage(selectedUrl: str):
             links.append(DownloadLink(label=label, url=urljoin("https://z-lib.sk/", str(main_dl['href']))))
     except:
         skipped += 1
+    
+    if skipped != 0:
+        return downloadInfo, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
 
     return downloadInfo, None
 

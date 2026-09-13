@@ -37,64 +37,80 @@ def internalPage(selectedUrl: str):
     html = None
     while html == None:
         html = get_cached_html(url=selectedUrl.replace(" ", "%20"))
-        print(f"Looking for {selectedUrl.replace(' ', '%20')} key")
         time.sleep(0.5)
     soup = BeautifulSoup(html, "html.parser")
- 
-    # --- titolo: <h1> se presente, altrimenti il primo <strong> nel tab Description ---
-    title_el = soup.find('h1')
-    if title_el:
-        title = title_el.get_text(strip=True)
-    else:
-        strong_el = soup.select_one('#description strong')
-        title = strong_el.get_text('', strip=True) if strong_el else 'Unknown'
- 
-    # --- immagine: nessuna cover nella pagina, provo comunque og:image se presente ---
-    og_image = soup.find('meta', property='og:image')
-    image = og_image.get('content') if og_image else None
- 
-    # --- dettagli: le due <ul class="list"> con <li><strong>Label</strong> <span>Value</span></li> ---
+
+    downloadInfo = DownloadInfo("", None, None, {}, [], None)
+
+    # Title
+    skipped = 0
+    title = None
+    try:
+        title_el = soup.find('h1')
+        if title_el:
+            title = title_el.get_text(strip=True)
+        else:
+            strong_el = soup.select_one('#description strong')
+            title = strong_el.get_text('', strip=True) if strong_el else 'None'
+        downloadInfo.title = title
+    except:
+        skipped += 1
+
+    # Images
+    image = None
+    try:
+        og_image = soup.find('meta', property='og:image')
+        image = og_image.get('content') if og_image else None
+    except:
+        skipped += 1
+
+    # Details
     details = {}
-    for li in soup.select('ul.list li'):
-        label_el = li.find('strong')
-        value_el = li.find('span')
-        if label_el and value_el:
-            label = label_el.get_text(strip=True)
-            value = value_el.get_text(' ', strip=True)
-            if label and value:
-                details[label] = value
- 
-    # --- descrizione: testo del tab "Description" (release notes) ---
+    try:
+        for li in soup.select('ul.list li'):
+            label_el = li.find('strong')
+            value_el = li.find('span')
+            if label_el and value_el:
+                label = label_el.get_text(strip=True)
+                value = value_el.get_text(' ', strip=True)
+                if label and value:
+                    details[label] = value
+    except:
+        skipped += 1
+
+    # Description
     description = None
-    desc_el = soup.select_one('#description')
-    if desc_el:
-        text = desc_el.get_text('\n', strip=True)
-        text = re.sub(r'\n{3,}', '\n\n', text)  # collassa righe vuote multiple
-        description = text or None
- 
-    # --- link: magnet principale + mirror .torrent ---
-    # esclude il magnet duplicato nel dropdown ("None Working? Use Magnet"),
-    # riconoscibile perché privo di target="_blank" a differenza dei mirror reali
+    try:
+        desc_el = soup.select_one('#description')
+        if desc_el:
+            text = desc_el.get_text('\n', strip=True)
+            text = re.sub(r'\n{3,}', '\n\n', text)  # collassa righe vuote multiple
+            description = text or None
+    except:
+        skipped += 1
+
+    # Links
     links = []
-    magnet_el = soup.select_one('a[href^="magnet:"]')
-    if magnet_el:
-        links.append(DownloadLink('Magnet', str(magnet_el['href'])))
+    try:
+        magnet_el = soup.select_one('a[href^="magnet:"]')
+        if magnet_el:
+            links.append(DownloadLink('Magnet', str(magnet_el['href'])))
+    except:
+        skipped += 1
+    try:
+        for a in soup.select('ul.dropdown-menu a[target="_blank"]'):
+            label = a.get_text(strip=True)
+            href = a.get('href')
+            if href:
+                links.append(DownloadLink(label, str(href)))
+    except:
+        skipped += 1
+
+    if skipped != 0:
+        return downloadInfo, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
  
-    for a in soup.select('ul.dropdown-menu a[target="_blank"]'):
-        label = a.get_text(strip=True)
-        href = a.get('href')
-        if href:
-            links.append(DownloadLink(label, str(href)))
- 
-    return DownloadInfo(
-        title=title,
-        image=str(image),
-        description=description,
-        details=details,
-        links=links,
-        source_url=selectedUrl,
-    )
-    
+    return downloadInfo, None
+
 
 def getSoup(website: str) -> BeautifulSoup | None:
     """Given an url, return the soup of it using requests"""
@@ -110,7 +126,6 @@ def getSoup(website: str) -> BeautifulSoup | None:
 
 def getLinks(search, url):
     url += search + '/1/'
-    print(f"Searching for {url}")
     html = None
     while html == None:
         html = get_cached_html(url=url.replace(" ", "%20"))
@@ -120,7 +135,7 @@ def getLinks(search, url):
     if not soup:
         return
     results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
- 
+    skipped = 0
     for row in soup.select('tr'):
         name_cell = row.select_one('td.coll-1.name')
         if not name_cell:
@@ -129,15 +144,31 @@ def getLinks(search, url):
         link_el = name_cell.select_one('a[href^="/torrent/"]')
         if not link_el:
             continue
- 
-        title = link_el.get_text(strip=True)
-        link = urljoin(url, str(link_el['href']))
- 
-        seeds_el = row.select_one('td.coll-2.seeds')
-        leeches_el = row.select_one('td.coll-3.leeches')
-        date_el = row.select_one('td.coll-date')
-        size_el = row.select_one('td.coll-4.size')
-        user_cell = row.select_one('td.coll-5')
+        
+        title = None
+        try:
+            title = link_el.get_text(strip=True)
+        except Exception as e:
+            skipped += 1
+        link = None
+        try:
+            link = urljoin(url, str(link_el['href']))
+        except:
+            skipped += 1
+        
+        seeds_el = None
+        leeches_el = None
+        date_el = None
+        size_el = None
+        user_cell = None
+        try:
+            seeds_el = row.select_one('td.coll-2.seeds')
+            leeches_el = row.select_one('td.coll-3.leeches')
+            date_el = row.select_one('td.coll-date')
+            size_el = row.select_one('td.coll-4.size')
+            user_cell = row.select_one('td.coll-5')
+        except:
+            skipped += 1
  
         seeds = seeds_el.get_text(strip=True) if seeds_el else '0'
         leeches = leeches_el.get_text(strip=True) if leeches_el else '0'
@@ -164,8 +195,10 @@ def getLinks(search, url):
         results['images'].append('NULL')
         results['descriptions'].append(description)
         results['badges'].append(badge)
- 
-    return results
+    
+    if skipped != 0:
+        return results, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
+    return results, None
 
 def getModuleInfo():
     return MODULE_INFO
