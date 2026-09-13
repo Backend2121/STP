@@ -16,7 +16,8 @@ class Header(ui.element):
 
         with ui.right_drawer(fixed=False).props('bordered') as right_drawer:
             with ui.list().classes('w-full'):
-                self.buildDrawerItem(target="/", icon='home', label='Home')
+                self.buildDrawerItem(target="/", icon='search', label='Search')
+                # Dynamic list
                 selected_extensions: observables.ObservableList = app.storage.user['selected_extensions']
                 SearchResults.refresh()
                 exts = utils.getExtensionsRefs()
@@ -26,6 +27,7 @@ class Header(ui.element):
                     for ext in exts:
                         if selected_extension == ext['id']:
                             self.buildDrawerItem(target=ext['base_url'], icon=ext['icon'], label=ext['display_name'])
+                            
                 self.buildDrawerItem(target="/settings", icon='settings', label='Settings')
 
     def buildDrawerItem(self, target: str, icon: str, label: str):
@@ -160,7 +162,8 @@ class SearchResults(ui.grid):
     
     async def open_internal_page(self, modId:str, target:str):
         mod = utils.getModuleById(modId)
-        if mod and mod['internal_page'] == True:     
+        if mod and mod['internal_page'] == True:
+            res = None
             info = None
             try:
                 if mod['requires_extension']:
@@ -174,12 +177,14 @@ class SearchResults(ui.grid):
                             ui.navigate.to(target + "#stp-capture", new_tab=True)
                     else:
                         ui.navigate.to(target + "#stp-capture", new_tab=True)
-                else:
-                    # If the user chooses 'NO' the module is simply skipped
-                    return
-                info = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
+                res = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
             except asyncio.TimeoutError:
                 ui.notify(f"Timeout for {mod['id']}",type='negative')
+            if res:
+                info, error = res
+                if error:
+                    error: utils.Error
+                    ui.notify(message=f"({error.code}) {error.msg} - {error.origin}", type=error.alert_type)
             if info and isinstance(info, utils.DownloadInfo):
                 with ui.dialog() as dialog:
                     with ui.card().classes('w-[80%] h-[80%] relative overflow-y-auto p-0'):

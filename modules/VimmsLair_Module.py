@@ -47,7 +47,7 @@ def getLinks(search, url) -> tuple[dict, Optional[Error]]:
     results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
 
     try:
-        soup = getSoup("Putul")
+        soup = getSoup(url)
     except Exception as e:
         return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'], exception=e)
     if not soup: return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'])
@@ -82,6 +82,8 @@ def getLinks(search, url) -> tuple[dict, Optional[Error]]:
             skipped += 1
         else:
             results['badges'].append("https://vimm.net/" + str(img.get('src')))
+    if skipped != 0:
+        return results, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
     return results, None
 
 def getModuleInfo():

@@ -59,7 +59,7 @@ def home_page():
     app.storage.user['modules'] = utils.getModulesMetadata()
     app.storage.user['extensions'] = utils.getExtensionsMetadata()
 
-    Header(dark=dark, subPageText="Home")
+    Header(dark=dark, subPageText="Search")
     with SearchBar(align_items='center'):
         pass
     SearchResults()

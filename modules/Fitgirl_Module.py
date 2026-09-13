@@ -3,7 +3,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString
-from utils import DownloadLink, DownloadInfo
+from utils import DownloadLink, DownloadInfo, Error, ErrorCode
 
 MODULE_INFO = {
     'id': 'fitgirl',
@@ -28,71 +28,109 @@ headers = {
 DETAIL_LABELS = ['Genres/Tags', 'Company', 'Companies', 'Languages', 'Original Size', 'Repack Size']
 
 def internalPage(selectedUrl: str):
+    # Needs too return DownloadInfo, Error (Optional)
     """Function used to display a custom page (eg. nested links) called after selecting a result from the main page"""
-    soup = getSoup(selectedUrl)
-    # Title
-    if not soup: return
-    first_h3 = soup.find('h3')
-    strong = first_h3.find('strong') if first_h3 else None
-    title = (strong or first_h3).get_text(' ', strip=True) if first_h3 else 'Unknown'
+    downloadInfo = DownloadInfo("", None, None, {}, [], None)
+    try:
+        soup = getSoup(selectedUrl)
+    except Exception as e:
+        return downloadInfo, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'], exception=e)
+    if not soup:
+        return downloadInfo, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'])
+
+    skipped = 0
+    first_h3 = None
+    title = None
+    try:
+        first_h3 = soup.find('h3')
+        strong = first_h3.find('strong') if first_h3 else None
+        title = (strong or first_h3).get_text(' ', strip=True) if first_h3 else 'Unknown'
+        downloadInfo.title = title
+    except Exception as e:
+        skipped += 1
  
     # Image
-    img_el = soup.find('img')
-    image = img_el.get('src') if img_el else None
+    image = None
+    try:
+        img_el = soup.find('img')
+        image = img_el.get('src') if img_el else None
+        if image:
+            downloadInfo.image = str(image)
+    except Exception as e:
+        skipped += 1
  
     # Details
     details: dict[str, str] = {}
-    intro_p = first_h3.find_next('p') if first_h3 else None
-    if intro_p:
-        text = intro_p.get_text(' ', strip=True)
-        pattern = '|'.join(re.escape(l) for l in DETAIL_LABELS)
-        matches = list(re.finditer(rf'({pattern}):\s*', text))
-        for i, m in enumerate(matches):
-            end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
-            details[m.group(1)] = text[m.end():end].strip()
+    if first_h3:
+        try:
+            intro_p = first_h3.find_next('p') if first_h3 else None
+            if intro_p:
+                text = intro_p.get_text(' ', strip=True)
+                pattern = '|'.join(re.escape(l) for l in DETAIL_LABELS)
+                matches = list(re.finditer(rf'({pattern}):\s*', text))
+                for i, m in enumerate(matches):
+                    end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
+                    details[m.group(1)] = text[m.end():end].strip()
+            downloadInfo.details = details
+        except Exception as e:
+            skipped += 1
+    else:
+        skipped += 1
  
     # Descriptions
     description = None
-    for title_div in soup.select('.su-spoiler-title'):
-        if title_div.get_text(strip=True) == 'Game Description':
-            content = title_div.find_next_sibling('div', class_='su-spoiler-content')
-            if content:
-                leading = next(
-                    (c for c in content.contents if isinstance(c, NavigableString) and c.strip()), ''
-                )
-                description = leading.strip() or None
-            break
+    try:
+        for title_div in soup.select('.su-spoiler-title'):
+            if title_div.get_text(strip=True) == 'Game Description':
+                content = title_div.find_next_sibling('div', class_='su-spoiler-content')
+                if content:
+                    leading = next(
+                        (c for c in content.contents if isinstance(c, NavigableString) and c.strip()), ''
+                    )
+                    description = leading.strip() or None
+                    if description:
+                        downloadInfo.description = description
+                break
+    except Exception as e:
+        skipped += 1
  
     # Links
     links: list[DownloadLink] = []
-    for h3 in soup.find_all('h3'):
-        heading = h3.get_text(strip=True)
-        if not heading.startswith('Download Mirrors'):
-            continue
- 
-        suffix = heading.replace('Download Mirrors', '').strip('() ')
-        ul = h3.find_next('ul')
-        if not ul:
-            continue
- 
-        for li in ul.find_all('li', recursive=False):
-            for spoiler in li.select('div.su-spoiler'):
-                spoiler.extract()
- 
-            anchors = li.find_all('a')
-            if not anchors:
+    try:
+        for h3 in soup.find_all('h3'):
+            heading = h3.get_text(strip=True)
+            if not heading.startswith('Download Mirrors'):
                 continue
- 
-            label = anchors[0].get_text(strip=True)
-            if anchors[0].get('href'):
-                full_label = f'{label} ({suffix})' if suffix else label
-                links.append(DownloadLink(full_label, str(anchors[0]['href'])))
- 
-            for a in anchors[1:]:
-                if a.get_text(strip=True).lower() == 'magnet':
-                    links.append(DownloadLink(f'{label} (Magnet)', str(a['href'])))
- 
-    return DownloadInfo(title, str(image), description, details, links, selectedUrl)
+    
+            suffix = heading.replace('Download Mirrors', '').strip('() ')
+            ul = h3.find_next('ul')
+            if not ul:
+                continue
+    
+            for li in ul.find_all('li', recursive=False):
+                for spoiler in li.select('div.su-spoiler'):
+                    spoiler.extract()
+    
+                anchors = li.find_all('a')
+                if not anchors:
+                    continue
+    
+                label = anchors[0].get_text(strip=True)
+                if anchors[0].get('href'):
+                    full_label = f'{label} ({suffix})' if suffix else label
+                    links.append(DownloadLink(full_label, str(anchors[0]['href'])))
+    
+                for a in anchors[1:]:
+                    if a.get_text(strip=True).lower() == 'magnet':
+                        links.append(DownloadLink(f'{label} (Magnet)', str(a['href'])))
+        downloadInfo.links = links
+    except Exception as e:
+        skipped += 1
+    
+    if skipped != 0:
+        return downloadInfo, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
+    
+    return downloadInfo, None
 
 def getSoup(website: str) -> BeautifulSoup | None:
     """Given an url, return the soup of it using requests"""
@@ -108,12 +146,18 @@ def getSoup(website: str) -> BeautifulSoup | None:
 
 def getLinks(search, url):
     url += search
-    soup = getSoup(url)
-    if not soup:
-        return
-    game_articles = soup.find_all('article')
     results = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": []}
- 
+    try:
+        soup = getSoup(url)
+    except Exception as e:
+        return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'], exception=e)
+    if not soup:
+        return results, Error.from_code(ErrorCode.WEBSITE_PARSE_FAILED, origin=MODULE_INFO['id'])
+    try:
+        game_articles = soup.find_all('article')
+    except Exception as e:
+        return results, Error.from_code(ErrorCode.CORE_PARSING_FAILED, origin=MODULE_INFO['id'], exception=e)
+    skipped = 0
     for article in game_articles:
         link = article.select_one("header h1 a")
         desc = article.select_one("div.entry-summary p")
@@ -124,6 +168,7 @@ def getLinks(search, url):
         else:
             results["titles"].append('NULL')
             results["links"].append('NULL')
+            skipped += 2
  
         results["images"].append('NULL')
  
@@ -134,13 +179,16 @@ def getLinks(search, url):
             results["descriptions"].append(desc.get_text(separator=' ', strip=True) or 'NULL')
         else:
             results["descriptions"].append('NULL')
- 
-        # bug originale: la chiave 'badges' esisteva nel dict ma non veniva
-        # mai popolata nel loop -> liste di lunghezza diversa, indici disallineati
+            skipped += 1
+        
         tag_links = article.select('footer.entry-meta a[rel="tag"]')
         badge = ', '.join(a.get_text(strip=True) for a in tag_links) if tag_links else 'NULL'
+        if badge == 'NULL':
+            skipped += 1
         results["badges"].append(badge)
-    return results
+    if skipped != 0:
+        return results, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
+    return results, None
 
 def getModuleInfo():
     return MODULE_INFO
