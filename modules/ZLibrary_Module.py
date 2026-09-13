@@ -59,6 +59,7 @@ def internalPage(selectedUrl: str):
             downloadInfo.image = image
     except:
         skipped += 1
+        print("Here?")
     details: dict[str, str] = {}
 
     try:
@@ -91,6 +92,7 @@ def internalPage(selectedUrl: str):
     except:
         skipped += 1
     
+    downloadInfo.links = links
     if skipped != 0:
         return downloadInfo, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
 
@@ -115,7 +117,9 @@ def getLinks(search, url):
     for book in books:
         image = None
         try:
-            image = book.find_all('img')[0].get('data-src', default="https://z-lib.sk/img/cover-not-exists.png")
+            print(book.select('z-bookcard img[data-src]'))
+            image = book.select('z-bookcard img[data-src]')[0].get('data-src', default="https://z-lib.sk/img/cover-not-exists.png")
+            print(image)
         except Exception as e:
             skipped += 1
         if image and 'cover-not-exists.png' in str(image):

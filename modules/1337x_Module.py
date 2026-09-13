@@ -61,6 +61,7 @@ def internalPage(selectedUrl: str):
     try:
         og_image = soup.find('meta', property='og:image')
         image = og_image.get('content') if og_image else None
+        downloadInfo.image = str(image)
     except:
         skipped += 1
 
@@ -75,6 +76,7 @@ def internalPage(selectedUrl: str):
                 value = value_el.get_text(' ', strip=True)
                 if label and value:
                     details[label] = value
+        downloadInfo.details = details
     except:
         skipped += 1
 
@@ -86,6 +88,7 @@ def internalPage(selectedUrl: str):
             text = desc_el.get_text('\n', strip=True)
             text = re.sub(r'\n{3,}', '\n\n', text)  # collassa righe vuote multiple
             description = text or None
+        downloadInfo.description = description
     except:
         skipped += 1
 
@@ -105,7 +108,7 @@ def internalPage(selectedUrl: str):
                 links.append(DownloadLink(label, str(href)))
     except:
         skipped += 1
-
+    downloadInfo.links = links
     if skipped != 0:
         return downloadInfo, Error.from_code(ErrorCode.PARTIAL_PARSE_FAILED, origin=MODULE_INFO['id'], msg=f"Failed to parse {skipped} elements")
  
