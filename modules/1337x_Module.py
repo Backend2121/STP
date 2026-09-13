@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
-import utils
+from utils import get_cached_html, delete_cached_html, DownloadInfo, DownloadLink, ErrorCode, Error
 import time
 from utils import DownloadInfo, DownloadLink
 
@@ -36,7 +36,7 @@ def internalPage(selectedUrl: str):
     """Function used to return an instance of DownloadInfo (eg. for multiple links/mirrors) called after selecting a result from the main page"""
     html = None
     while html == None:
-        html = utils.get_cached_html(url=selectedUrl.replace(" ", "%20"))
+        html = get_cached_html(url=selectedUrl.replace(" ", "%20"))
         print(f"Looking for {selectedUrl.replace(' ', '%20')} key")
         time.sleep(0.5)
     soup = BeautifulSoup(html, "html.parser")
@@ -113,9 +113,9 @@ def getLinks(search, url):
     print(f"Searching for {url}")
     html = None
     while html == None:
-        html = utils.get_cached_html(url=url.replace(" ", "%20"))
+        html = get_cached_html(url=url.replace(" ", "%20"))
         time.sleep(0.5)
-    utils.delete_cached_html(url.replace(" ", "%20"))
+    delete_cached_html(url.replace(" ", "%20"))
     soup = BeautifulSoup(html, "html.parser")
     if not soup:
         return
