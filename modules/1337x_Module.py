@@ -86,7 +86,7 @@ def internalPage(selectedUrl: str):
         desc_el = soup.select_one('#description')
         if desc_el:
             text = desc_el.get_text('\n', strip=True)
-            text = re.sub(r'\n{3,}', '\n\n', text)  # collassa righe vuote multiple
+            text = re.sub(r'\n{3,}', '\n\n', text) 
             description = text or None
         downloadInfo.description = description
     except:
