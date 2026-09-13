@@ -4,6 +4,10 @@ import os
 from typing import Literal, Optional
 from urllib.parse import quote
 from dataclasses import dataclass, field
+import logging
+import sys
+from datetime import datetime
+from pathlib import Path
 
 loaded_modules = []
 loaded_modules_metadata = []
@@ -12,6 +16,38 @@ loaded_extensions = []
 loaded_extensions_metadata = []
 
 _html_cache: dict[str, str] = {}
+
+_logger = None
+
+def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
+    # Singleton behaviour
+    global _logger
+    if _logger is not None:
+        return _logger
+
+    Path(log_dir).mkdir(exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_file = Path(log_dir) / f"{name}_{timestamp}.log"
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.propagate = False
+
+    fmt = logging.Formatter(
+        "%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setFormatter(fmt)
+    logger.addHandler(file_handler)
+
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(fmt)
+    logger.addHandler(console_handler)
+
+    _logger = logger
+    return _logger
 
 class ErrorCode(IntEnum):
     """Enum for error codes -> mapped by ERROR_REGISTRY"""
