@@ -13,8 +13,6 @@ class API_HtmlPage(BaseModel):
 def get_html_page(page: API_HtmlPage):
     url = page.url.replace("#stp-capture", "")
     utils.cache_html(url, page.html)
-    log = utils.getLogger()
-    log.info("Correctly received %s HTML from web extension", url)
     return {'URL': url, 'HTML': page.html}
 
 @ui.page('/settings')
