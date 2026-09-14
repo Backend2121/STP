@@ -66,9 +66,10 @@ class SearchBar(ui.column):
         if query == None or query == "":
             ui.notify('Search bar is empty!', type='warning')
             return
+        log = utils.getLogger()
         app.storage.user['search_results'] = {}
         selected_modules = app.storage.user['selected_modules']
-        print(f"Selected modules: {selected_modules}")
+        log.info("Starting search for %s using %s", query, selected_modules)
         SearchResults.refresh()
         mods = utils.getModulesRefs()
         full_res = {"titles": [], "links": [], "images": [], "descriptions": [], "badges": [], "origin": [], "modId": []}
@@ -93,17 +94,21 @@ class SearchBar(ui.column):
                                 link = mod['mod'].build_link(query)
                                 ui.navigate.to(link + "#stp-capture", new_tab=True)
                                 pass
-                        print(f"Starting module {mod['display_name']}")
+                        log.debug("Starting module %s", mod['display_name'])
+                        # Most important function of STP
                         res = await asyncio.wait_for(run.io_bound(mod['mod'].getLinks, query, mod['base_url']), timeout=mod['timeout'])
                         row.clear()
                     except asyncio.TimeoutError:
                         row.clear()
+                        log.error("%s module took too long to complete the request", mod['id'])
                         ui.notify(f"Timeout for {mod['id']}",type='negative')
                         continue
                     if res:
                         res, error = res
                         if error:
                             error: utils.Error
+                            # Logger should just parrot back the error returned by the module
+                            log.error("(%s) %s - %s", error.code, error.msg, error.origin)
                             ui.notify(message=f"({error.code}) {error.msg} - {error.origin}", type=error.alert_type)
                         full_res['titles'].append(res['titles'])
                         full_res['links'].append(res['links'])
@@ -112,7 +117,9 @@ class SearchBar(ui.column):
                         full_res['badges'].append(res['badges'])
                         full_res['origin'].append(mod['display_name'])
                         full_res['modId'].append(mod['id'])
+                        log.debug("Successfully completed search with module %s", mod['display_name'])
                     row.delete()
+        log.info("Successfully completed search for %s using %s", query, selected_modules)
         app.storage.user['search_results'] = full_res
         SearchResults.refresh()
 
@@ -162,11 +169,14 @@ class SearchResults(ui.grid):
     
     async def open_internal_page(self, modId:str, target:str):
         mod = utils.getModuleById(modId)
+        log = utils.getLogger()
         if mod and mod['internal_page'] == True:
             res = None
             info = None
+            log.info("Opening internal page of %s for %s", modId, target)
             try:
                 if mod['requires_extension']:
+                    log.debug("Extension is required for %s", modId)
                     if not app.storage.user['skip_extension_confirmation']:
                         with ui.dialog() as dialog, ui.card():
                             ui.label("Do you want to open the module's target website to solve Cloudflare's challenge?\n (Required to fetch results)")
@@ -174,21 +184,28 @@ class SearchResults(ui.grid):
                                 ui.button('Yes', on_click=lambda: dialog.submit('Yes'))
                                 ui.button('No', on_click=lambda: dialog.submit('No'))
                         if await dialog == 'Yes':
+                            log.info("Redirecting to %s", (target + "#stp-capture"))
                             ui.navigate.to(target + "#stp-capture", new_tab=True)
                     else:
+                        log.debug("skip_extension_confirmation is enabled, redirecting")
                         ui.navigate.to(target + "#stp-capture", new_tab=True)
+                log.info("Starting %s internal page", modId)
+                # Second most important function of STP
                 res = await asyncio.wait_for(run.io_bound(mod['mod'].internalPage, target), timeout=mod['timeout'])
             except asyncio.TimeoutError:
+                log.error("%s module internal page took too long to complete the request", mod['id'])
                 ui.notify(f"Timeout for {mod['id']}",type='negative')
             if res:
                 info, error = res
                 if error:
                     error: utils.Error
+                    # Logger should just parrot back the error returned by the module
+                    log.error("(%s) %s - %s", error.code, error.msg, error.origin)
                     ui.notify(message=f"({error.code}) {error.msg} - {error.origin}", type=error.alert_type)
             if info and isinstance(info, utils.DownloadInfo):
                 with ui.dialog() as dialog:
                     with ui.card().classes('w-[80%] h-[80%] relative overflow-y-auto p-0'):
-                        # Header
+                        # Header of dialog
                         with ui.card().classes(
                             'sticky top-0 right-0 z-10 w-full flex-row justify-end gap-1 m-0'
                         ):
@@ -198,7 +215,7 @@ class SearchResults(ui.grid):
                                     icon='open_in_new',
                                     on_click=lambda: ui.navigate.to(str(info.source_url), new_tab=True),
                                 ).props('flat round dense')
-                        # The rest
+                        # The rest of dialog
                         with ui.column().classes('w-full p-4 gap-3 items-center'):
             
                             if info.image:
@@ -216,7 +233,7 @@ class SearchResults(ui.grid):
                                     for label, value in info.details.items():
                                         ui.label(label).classes('font-semibold text-right')
                                         ui.label(value)
-            
+
                             if info.links:
                                 with ui.row().classes('w-full flex-wrap justify-center gap-2 mt-2'):
                                     for link in info.links:
@@ -226,3 +243,4 @@ class SearchResults(ui.grid):
                                             on_click=lambda _, l=link: ui.navigate.to(l.url, new_tab=True),
                                         )
                 dialog.open()
+                log.info("Successfully opened %s internal page dialog for %s", modId, target)
