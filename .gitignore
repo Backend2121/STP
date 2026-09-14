@@ -1,6 +1,6 @@
 .nicegui/
 __pycache__/
-tests.py
+tests/
 reference.md
 logs/
 secret.txt

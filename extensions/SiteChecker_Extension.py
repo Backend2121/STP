@@ -69,7 +69,7 @@ async def ping_with_timeout(metadata: dict):
 @ui.page(EXTENSION_INFO['base_url'])
 async def extensionPage():
     log = utils.getLogger()
-    log.info("[%s] Loading %s extension",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
+    log.info("[%s] Loading %s extension page",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     Header(dark=dark, subPageText=EXTENSION_INFO['display_name'])
