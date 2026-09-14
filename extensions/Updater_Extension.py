@@ -1,5 +1,6 @@
 from nicegui import ui, app
 from components import Header
+import utils
 
 EXTENSION_INFO = {
     'id': 'updater',
@@ -18,6 +19,8 @@ EXTENSION_INFO = {
 
 @ui.page(EXTENSION_INFO['base_url'])
 def extensionPage():
+    log = utils.getLogger()
+    log.info("[%s] Loading %s extension page",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     Header(dark=dark, subPageText=EXTENSION_INFO['display_name'])
