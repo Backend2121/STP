@@ -1,6 +1,4 @@
 import time
-from types import CoroutineType
-from typing import Any
 
 import requests
 import asyncio
@@ -51,9 +49,11 @@ def pingWebsite(url: str, timeout: float) -> str:
 async def ping_with_timeout(metadata: dict):
     # Pinger helper funciton, starts the thread
     # Can be removed, but it lets me have a timeout exception
+    log = utils.getLogger()
     id = metadata['id']
     timeout = metadata.get('timeout', 10)
     try:
+        log.debug("[%s] Pinging %s", EXTENSION_INFO['id'], metadata['website'])
         res = await asyncio.wait_for(
             run.io_bound(pingWebsite, metadata['website'], timeout), timeout=timeout + 1
         )
@@ -63,10 +63,13 @@ async def ping_with_timeout(metadata: dict):
             results[id] = "NULL"
     except asyncio.TimeoutError:
         results[id] = 'Timeout'
+    log.debug("[%s] Successfully pinged %s - %s", EXTENSION_INFO['id'], metadata['website'], str(results[id]))
     pingResults.refresh()
  
 @ui.page(EXTENSION_INFO['base_url'])
 async def extensionPage():
+    log = utils.getLogger()
+    log.info("[%s] Loading %s extension",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     Header(dark=dark, subPageText=EXTENSION_INFO['display_name'])
@@ -78,6 +81,7 @@ async def extensionPage():
         pingResults()
     # Epic function to wait for the ui to be ready before awaiting long shit
     await ui.context.client.connected()
+    log.info("[%s] Successfully loaded %s extension",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
     await asyncio.gather(*(ping_with_timeout(m) for m in modules_metadata))
 
 @ui.refreshable
