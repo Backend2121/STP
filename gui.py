@@ -3,8 +3,6 @@ from pydantic import BaseModel
 from components import SearchBar, SearchResults, Header
 import utils
 import asyncio
-import sys
-import os
 
 VERSION = '1.0.1'
 
