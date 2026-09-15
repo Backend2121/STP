@@ -9,6 +9,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 import uuid
+import requests
+import re
 
 loaded_modules = []
 loaded_modules_metadata = []
@@ -84,6 +86,15 @@ class DownloadInfo:
     details: dict[str, str] = field(default_factory=dict)
     links: list[DownloadLink] = field(default_factory=list)
     source_url: Optional[str] = None
+
+def checkUpdates():
+    # r = requests.get("https://github.com/Backend2121/STP")
+    r = requests.get("https://raw.githubusercontent.com/Backend2121/STP/main/gui.py")
+    if r.status_code == 200:
+        print(r.content)
+    # Locate the file VERSION "variable"
+    
+    pass
 
 def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     # Singleton behaviour

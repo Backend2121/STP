@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from components import SearchBar, SearchResults, Header
 import utils
 
+VERSION = '1.0.0'
+
 imported_modules = []
 
 class API_HtmlPage(BaseModel):
