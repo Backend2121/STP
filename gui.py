@@ -4,7 +4,7 @@ from components import SearchBar, SearchResults, Header
 import utils
 import asyncio
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 imported_modules = []
 
@@ -72,7 +72,8 @@ def filesToUpdate():
                         ui.label(text=f"{local} → {remote}").classes("text-orange-600")
 
                 if v != "Loading" and local != remote:
-                    ui.button("Update", on_click=lambda _, k=k: updateFile(k)).props("color=orange")
+                    ui.button("View on Github", on_click=lambda _, file=k: ui.navigate.to(utils.BASE_URL + f"/{file}", new_tab=True))
+                    ui.button("Update", on_click=lambda _, file=k: updateFile(file)).props("color=orange")
 
 @ui.page('/settings')
 def settings_page():
