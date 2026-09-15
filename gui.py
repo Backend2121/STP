@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from components import SearchBar, SearchResults, Header
 import utils
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 imported_modules = []
 

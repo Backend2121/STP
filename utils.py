@@ -87,14 +87,66 @@ class DownloadInfo:
     links: list[DownloadLink] = field(default_factory=list)
     source_url: Optional[str] = None
 
+def listAllPythonFiles():
+    cwd = os.getcwd()
+    python_files = []
+    scannable_subdirs = [cwd + '/extensions', cwd + '/modules', cwd]
+    for subdir in scannable_subdirs:
+        files = os.listdir(subdir)
+        for file in files:
+            if file.endswith(".py"):
+                relativeSubdir = subdir.split('/')[-1]
+                # Dodge the STP main folder and append only the base file name
+                if relativeSubdir == 'STP':
+                    python_files.append(file)
+                else:
+                    python_files.append(relativeSubdir + '/' + file)
+
+    return python_files
+
+def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote_bugfix, local_bugfix) -> int:
+    if remote_major > local_major:
+        return 1
+    if remote_minor > local_minor:
+        return 2
+    if remote_bugfix > local_bugfix:
+        return 3
+    return 0
+
 def checkUpdates():
-    # r = requests.get("https://github.com/Backend2121/STP")
-    r = requests.get("https://raw.githubusercontent.com/Backend2121/STP/main/gui.py")
-    if r.status_code == 200:
-        print(r.content)
-    # Locate the file VERSION "variable"
-    
-    pass
+    files = listAllPythonFiles()
+    for file in files:
+        r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/main/{file}")
+        remote_major = None
+        local_major = None
+        remote_minor = None
+        local_minor = None
+        remote_bugfix = None
+        local_bugfix = None
+        if r.status_code == 200:
+            # Locate the file VERSION "variable"
+            # Locates in the first group the major, minor, bugfix numbers
+            remote_matches = re.findall(r"(?:VERSION|'version')\s?(?:=|:)\s?'(\d+.\d+.\d+)'", r.text)
+            if len(remote_matches) == 1:
+                remote_major, remote_minor, remote_bugfix = [ int(i) for i in remote_matches[0].split(".")]
+            else:
+                print(f"Remote {file} version undefined")
+                continue
+            local_matches = re.findall(r"(?:VERSION|'version')\s?(?:=|:)\s?'(\d+.\d+.\d+)'", r.text)
+            if len(local_matches) == 1:
+                local_major, local_minor, local_bugfix = [ int(i) for i in local_matches[0].split(".")]
+            else:
+                print(f"Local {file} version undefined")
+                continue
+        res = updateAvailable(remote_major, local_major, remote_minor, local_minor, remote_bugfix, local_bugfix)
+        if res == 1:
+            print(f"Major update for {file} is available")
+        if res == 2:
+            print(f"Minor update for {file} is available")
+        if res == 3:
+            print(f"Bugfix update for {file} is available")
+        print(f"Remote {file} version is: {remote_major}.{remote_minor}.{remote_bugfix}")
+        pass
 
 def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     # Singleton behaviour
