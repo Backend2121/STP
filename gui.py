@@ -3,12 +3,16 @@ from pydantic import BaseModel
 from components import SearchBar, SearchResults, Header
 import utils
 import asyncio
+import sys
+import os
 
 VERSION = '1.0.1'
 
 imported_modules = []
 
 updateResults: dict[str, tuple[str,str]] = {}
+
+CRITICAL_FILES = {"gui.py", "components.py", "utils.py"}
 
 class API_HtmlPage(BaseModel):
     url: str
@@ -20,16 +24,33 @@ def get_html_page(page: API_HtmlPage):
     utils.cache_html(url, page.html)
     return {'URL': url, 'HTML': page.html}
 
+async def confirm_restart_dialog(file: str):
+    with ui.dialog() as dialog, ui.card():
+        ui.label("Restart required").classes("text-lg font-bold")
+        ui.label(f"Updating {file} will require restarting STP afterwards. Continue?")
+        with ui.row().classes("justify-end w-full"):
+            ui.button("No", on_click=lambda: dialog.submit(False)).props("flat")
+            ui.button("Yes", on_click=lambda: dialog.submit(True)).props("color=orange")
+    return await dialog
+
+
 async def updateFile(file: str):
-    filesToUpdate.refresh()
     log = utils.getLogger()
+
+    if file in CRITICAL_FILES:
+        confirmed = await confirm_restart_dialog(file)
+        if not confirmed:
+            return
+
+    filesToUpdate.refresh()
     try:
+        ui.notify(f"Updating... restart STP", type="positive")
         await run.io_bound(utils.download_and_replace, file)
         log.info("Successfully updated %s", file)
         ui.notify(f"{file} updated!", type="positive")
     except Exception as e:
-        ui.notify(f"Unable to update {file}: {e}", type="negative")
         log.error("Unable to update %s: %s", file, str(e))
+        ui.notify(f"Unable to update {file}: {e}", type="negative")
     filesToUpdate.refresh()
 
 def checkUpdatesAndRefresh():
