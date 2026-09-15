@@ -29,7 +29,7 @@ class Header(ui.element):
                     for ext in exts:
                         if selected_extension == ext['id']:
                             self.buildDrawerItem(target=ext['base_url'], icon=ext['icon'], label=ext['display_name'])
-                            
+                self.buildDrawerItem(target="/update", icon='update', label='Update')
                 self.buildDrawerItem(target="/settings", icon='settings', label='Settings')
 
     def buildDrawerItem(self, target: str, icon: str, label: str):

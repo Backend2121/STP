@@ -14,6 +14,8 @@ import re
 
 VERSION = '1.0.0'
 
+_update_available: bool = False
+
 loaded_modules = []
 loaded_modules_metadata = []
 
@@ -106,6 +108,14 @@ def listAllPythonFiles():
 
     return python_files
 
+def getUpdateAvailable():
+    global _update_available
+    return _update_available
+
+def setUpdateAvailable(val: bool):
+    global _update_available
+    _update_available = val
+
 def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote_bugfix, local_bugfix) -> int:
     if remote_major > local_major:
         return 1
@@ -118,6 +128,7 @@ def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote
 def checkUpdates():
     files = listAllPythonFiles()
     log = getLogger()
+    log.info("[Updater] Checking for updates")
     for file in files:
         r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/main/{file}")
         remote_major = None
@@ -133,22 +144,27 @@ def checkUpdates():
             if len(remote_matches) == 1:
                 remote_major, remote_minor, remote_bugfix = [ int(i) for i in remote_matches[0].split(".")]
             else:
-                log.error("Remote %s version undefined", file)
+                log.error("[Updater] Remote %s version undefined", file)
                 continue
-            local_matches = re.findall(r"(?:VERSION|'version')\s?(?:=|:)\s?'(\d+.\d+.\d+)'", r.text)
-            if len(local_matches) == 1:
-                local_major, local_minor, local_bugfix = [ int(i) for i in local_matches[0].split(".")]
-            else:
-                log.error("Local %s version undefined", file)
-                continue
+            # Read local file
+            with open(os.getcwd() + "/" + file, "r") as f:
+                local_matches = re.findall(r"(?:VERSION|'version')\s?(?:=|:)\s?'(\d+.\d+.\d+)'", f.read())
+                if len(local_matches) == 1:
+                    local_major, local_minor, local_bugfix = [ int(i) for i in local_matches[0].split(".")]
+                else:
+                    log.error("[Updater] Local %s version undefined", file)
+                    continue
         res = updateAvailable(remote_major, local_major, remote_minor, local_minor, remote_bugfix, local_bugfix)
         if res == 1:
-            log.warning("Major update for %s is available", file)
+            log.warning("[Updater] Major update for %s is available", file)
+            setUpdateAvailable(True)
         if res == 2:
-            log.warning("Minor update for %s is available", file)
+            log.warning("[Updater] Minor update for %s is available", file)
+            setUpdateAvailable(True)
         if res == 3:
-            log.warning("Bugfix update for %s is available", file)
-        pass
+            log.warning("[Updater] Bugfix update for %s is available", file)
+            setUpdateAvailable(True)
+    log.info("[Updater] Successfully checked for updates")
 
 def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     # Singleton behaviour
