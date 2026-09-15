@@ -221,15 +221,15 @@ def get_cached_html(url: str) -> str | None:
 def cache_html(url: str, html: str) -> None:
     _html_cache[url] = html
     log = getLogger()
-    log.info("Correctly received %s HTML from web extension", url)
+    log.info("[Web extension] Correctly received %s HTML from web extension", url)
 
 def delete_cached_html(url: str) -> bool:
     removed = _html_cache.pop(url, '')
     log = getLogger()
     if removed == '':
-        log.debug("Correctly received %s HTML from web extension", url)
+        log.debug("[Web extension] Correctly received %s HTML from web extension", url)
         return False
-    log.debug("Correctly removed %s key, value pair from _html_cache", url)
+    log.debug("[Web extension] Correctly removed %s key, value pair from _html_cache", url)
     return True
 
 def convert_to_html_string(query:str) -> str:

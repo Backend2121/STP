@@ -22,6 +22,7 @@ def get_html_page(page: API_HtmlPage):
 
 def updateFile(file: str):
     ui.notify(f"Updating {file}")
+    # TODO If a main file is being updated, download NEW_*.py launch an helper script that kills the parent, rename NEW_*.py to *.py, relaunch it
 
 def checkUpdatesAndRefresh():
     global updateResults
@@ -34,12 +35,12 @@ async def update_page():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     log = utils.getLogger()
+    log.info("Redirecting to /update")
     Header(dark=dark, subPageText="Updater")
     with ui.element().classes('w-full flex align-center justify-center items-center'):
         filesToUpdate()
         await ui.context.client.connected()
-        res = await asyncio.wait_for(run.io_bound(checkUpdatesAndRefresh), timeout=10)
-        print(res)
+        await asyncio.wait_for(run.io_bound(checkUpdatesAndRefresh), timeout=10)
 
 @ui.refreshable
 def filesToUpdate():
@@ -70,6 +71,7 @@ def settings_page():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     log = utils.getLogger()
+    log.info("Redirecting to /settings")
     modules = app.storage.user['modules']
     log.debug("Found %s modules", modules)
     extensions = app.storage.user['extensions']
@@ -100,7 +102,7 @@ def settings_page():
 @ui.page('/')
 def home_page():
     log = utils.getLogger()
-    log.info("Starting UI")
+    log.info("Redirecting to /home")
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     app.storage.user.setdefault('search_results', {})
@@ -108,6 +110,7 @@ def home_page():
     app.storage.user.setdefault('extensions', [])
     app.storage.user.setdefault('selected_modules', [])
     app.storage.user.setdefault('selected_extensions', [])
+    # TODO avoid reloading, not really important but polite and cleaner
     log.info("Loading modules")
     if len(app.storage.user['modules']) == 0:
         app.storage.user['modules'] = utils.getModulesMetadata()
