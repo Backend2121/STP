@@ -1,11 +1,14 @@
-from nicegui import ui, app
+from nicegui import ui, app, run
 from pydantic import BaseModel
 from components import SearchBar, SearchResults, Header
 import utils
+import asyncio
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 imported_modules = []
+
+updateResults: dict[str, str] = {}
 
 class API_HtmlPage(BaseModel):
     url: str
@@ -17,11 +20,30 @@ def get_html_page(page: API_HtmlPage):
     utils.cache_html(url, page.html)
     return {'URL': url, 'HTML': page.html}
 
-@ui.page('update')
-def update_page():
+@ui.page('/update')
+async def update_page():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     log = utils.getLogger()
+    with ui.element().classes('w-full flex align-center justify-center items-center'):
+        filesToUpdate()
+        await ui.context.client.connected()
+        res = await asyncio.wait_for(run.io_bound(utils.checkUpdates), timeout=10)
+        print(res)
+
+@ui.refreshable
+def filesToUpdate():
+    global results
+    with ui.card().classes("min-w-1/2"):
+        for k,v in updateResults.items():
+            if v == "Loading":
+                with ui.row():
+                    ui.label(text=f'{k}:').classes("font-bold")
+                    ui.spinner(size='sm')
+                    ui.label(text=" Loading...")
+            else:
+                with ui.row():
+                        ui.label(text=f'{k}:').classes("font-bold")
 
 @ui.page('/settings')
 def settings_page():

@@ -129,6 +129,7 @@ def checkUpdates():
     files = listAllPythonFiles()
     log = getLogger()
     log.info("[Updater] Checking for updates")
+    files_to_update = []
     for file in files:
         r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/main/{file}")
         remote_major = None
@@ -164,7 +165,10 @@ def checkUpdates():
         if res == 3:
             log.warning("[Updater] Bugfix update for %s is available", file)
             setUpdateAvailable(True)
+        if getUpdateAvailable():
+            files_to_update.append(file)
     log.info("[Updater] Successfully checked for updates")
+    return files_to_update
 
 def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     # Singleton behaviour
