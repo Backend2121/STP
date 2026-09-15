@@ -11,8 +11,11 @@ from pathlib import Path
 import uuid
 import requests
 import re
+import httpx
+import shutil
 
 VERSION = '1.0.0'
+BASE_URL = "https://raw.githubusercontent.com/Backend2121/STP/refs/heads/main/"
 
 _update_available: bool = False
 
@@ -91,6 +94,17 @@ class DownloadInfo:
     links: list[DownloadLink] = field(default_factory=list)
     source_url: Optional[str] = None
 
+def download_and_replace(file: str):
+    url = f"{BASE_URL}/{file}"
+    target = Path(file)
+
+    resp = httpx.get(url, timeout=10, follow_redirects=True)
+    resp.raise_for_status()
+
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    tmp.write_bytes(resp.content)
+    shutil.move(tmp, target)
+
 def listAllPythonFiles():
     cwd = os.getcwd()
     python_files = []
@@ -131,7 +145,7 @@ def checkUpdates():
     log.info("[Updater] Checking for updates")
     files_to_update: dict[str, tuple[str,str]] = {}
     for file in files:
-        r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/refs/heads/main/{file}")
+        r = requests.get(f"{BASE_URL}{file}")
         remote_major = None
         local_major = None
         remote_minor = None

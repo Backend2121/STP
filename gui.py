@@ -20,9 +20,17 @@ def get_html_page(page: API_HtmlPage):
     utils.cache_html(url, page.html)
     return {'URL': url, 'HTML': page.html}
 
-def updateFile(file: str):
-    ui.notify(f"Updating {file}")
-    # TODO If a main file is being updated, download NEW_*.py launch an helper script that kills the parent, rename NEW_*.py to *.py, relaunch it
+async def updateFile(file: str):
+    filesToUpdate.refresh()
+    log = utils.getLogger()
+    try:
+        await run.io_bound(utils.download_and_replace, file)
+        log.info("Successfully updated %s", file)
+        ui.notify(f"{file} updated!", type="positive")
+    except Exception as e:
+        ui.notify(f"Unable to update {file}: {e}", type="negative")
+        log.error("Unable to update %s: %s", file, str(e))
+    filesToUpdate.refresh()
 
 def checkUpdatesAndRefresh():
     global updateResults
