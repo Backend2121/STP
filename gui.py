@@ -4,11 +4,11 @@ from components import SearchBar, SearchResults, Header
 import utils
 import asyncio
 
-VERSION = '1.0.1'
+VERSION = '1.0.0'
 
 imported_modules = []
 
-updateResults: dict[str, str] = {}
+updateResults: dict[str, tuple[str,str]] = {}
 
 class API_HtmlPage(BaseModel):
     url: str
@@ -20,30 +20,50 @@ def get_html_page(page: API_HtmlPage):
     utils.cache_html(url, page.html)
     return {'URL': url, 'HTML': page.html}
 
+def updateFile(file: str):
+    ui.notify(f"Updating {file}")
+
+def checkUpdatesAndRefresh():
+    global updateResults
+    updateResults = utils.checkUpdates()
+    filesToUpdate.refresh()
+    return updateResults
+
 @ui.page('/update')
 async def update_page():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
     log = utils.getLogger()
+    Header(dark=dark, subPageText="Updater")
     with ui.element().classes('w-full flex align-center justify-center items-center'):
         filesToUpdate()
         await ui.context.client.connected()
-        res = await asyncio.wait_for(run.io_bound(utils.checkUpdates), timeout=10)
+        res = await asyncio.wait_for(run.io_bound(checkUpdatesAndRefresh), timeout=10)
         print(res)
 
 @ui.refreshable
 def filesToUpdate():
-    global results
     with ui.card().classes("min-w-1/2"):
-        for k,v in updateResults.items():
-            if v == "Loading":
-                with ui.row():
-                    ui.label(text=f'{k}:').classes("font-bold")
-                    ui.spinner(size='sm')
-                    ui.label(text=" Loading...")
-            else:
-                with ui.row():
-                        ui.label(text=f'{k}:').classes("font-bold")
+        for k, v in updateResults.items():
+            with ui.row().classes("items-center justify-between w-full"):
+                with ui.row().classes("items-center"):
+                    ui.label(text=f'{k.split('/')[-1]}:').classes("font-bold")
+
+                    if v == "Loading":
+                        ui.spinner(size='sm')
+                        ui.label(text="Loading...")
+                        continue
+
+                    local, remote = v
+                    if local == remote:
+                        ui.icon("check_circle", color="green")
+                        ui.label(text=f"Up to date ({local})")
+                    else:
+                        ui.icon("upgrade", color="orange")
+                        ui.label(text=f"{local} → {remote}").classes("text-orange-600")
+
+                if v != "Loading" and local != remote:
+                    ui.button("Update", on_click=lambda _, k=k: updateFile(k)).props("color=orange")
 
 @ui.page('/settings')
 def settings_page():

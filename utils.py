@@ -129,9 +129,9 @@ def checkUpdates():
     files = listAllPythonFiles()
     log = getLogger()
     log.info("[Updater] Checking for updates")
-    files_to_update = []
+    files_to_update: dict[str, tuple[str,str]] = {}
     for file in files:
-        r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/main/{file}")
+        r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/refs/heads/main/{file}")
         remote_major = None
         local_major = None
         remote_minor = None
@@ -159,14 +159,15 @@ def checkUpdates():
         if res == 1:
             log.warning("[Updater] Major update for %s is available", file)
             setUpdateAvailable(True)
+            files_to_update[file] = (f"{local_major}.{local_minor}.{local_bugfix}", f"{remote_major}.{remote_minor}.{remote_bugfix}")
         if res == 2:
             log.warning("[Updater] Minor update for %s is available", file)
             setUpdateAvailable(True)
+            files_to_update[file] = (f"{local_major}.{local_minor}.{local_bugfix}", f"{remote_major}.{remote_minor}.{remote_bugfix}")
         if res == 3:
             log.warning("[Updater] Bugfix update for %s is available", file)
             setUpdateAvailable(True)
-        if getUpdateAvailable():
-            files_to_update.append(file)
+        files_to_update[file] = (f"{local_major}.{local_minor}.{local_bugfix}", f"{remote_major}.{remote_minor}.{remote_bugfix}")
     log.info("[Updater] Successfully checked for updates")
     return files_to_update
 
