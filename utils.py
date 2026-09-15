@@ -12,6 +12,8 @@ import uuid
 import requests
 import re
 
+VERSION = '1.0.0'
+
 loaded_modules = []
 loaded_modules_metadata = []
 
@@ -115,6 +117,7 @@ def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote
 
 def checkUpdates():
     files = listAllPythonFiles()
+    log = getLogger()
     for file in files:
         r = requests.get(f"https://raw.githubusercontent.com/Backend2121/STP/main/{file}")
         remote_major = None
@@ -130,22 +133,21 @@ def checkUpdates():
             if len(remote_matches) == 1:
                 remote_major, remote_minor, remote_bugfix = [ int(i) for i in remote_matches[0].split(".")]
             else:
-                print(f"Remote {file} version undefined")
+                log.error("Remote %s version undefined", file)
                 continue
             local_matches = re.findall(r"(?:VERSION|'version')\s?(?:=|:)\s?'(\d+.\d+.\d+)'", r.text)
             if len(local_matches) == 1:
                 local_major, local_minor, local_bugfix = [ int(i) for i in local_matches[0].split(".")]
             else:
-                print(f"Local {file} version undefined")
+                log.error("Local %s version undefined", file)
                 continue
         res = updateAvailable(remote_major, local_major, remote_minor, local_minor, remote_bugfix, local_bugfix)
         if res == 1:
-            print(f"Major update for {file} is available")
+            log.warning("Major update for %s is available", file)
         if res == 2:
-            print(f"Minor update for {file} is available")
+            log.warning("Minor update for %s is available", file)
         if res == 3:
-            print(f"Bugfix update for {file} is available")
-        print(f"Remote {file} version is: {remote_major}.{remote_minor}.{remote_bugfix}")
+            log.warning("Bugfix update for %s is available", file)
         pass
 
 def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):

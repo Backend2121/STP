@@ -3,6 +3,8 @@ from typing import Literal
 from nicegui import Client, ui, app, run, observables
 import utils
 
+VERSION = '1.0.0'
+
 class Header(ui.element):
     def __init__(self, tag: str | None = None, *, _client: Client | None = None, dark, subPageText: str) -> None:
         super().__init__(tag, _client=_client)
