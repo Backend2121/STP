@@ -71,7 +71,8 @@ class Error:
     exception: str = ""
     @classmethod
     def from_code(cls, code: ErrorCode, origin: str, exception: Exception | None = None, msg: Optional[str] = None) -> "Error":
-        # TODO Add logger call here
+        log = getLogger()
+        log.error("Error occurred in parsing %s: %s", origin, str(exception))
         severity, default_msg = ERROR_REGISTRY[code]
         alert_type = 'info'
         if severity == 1: alert_type = 'info'
