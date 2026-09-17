@@ -38,6 +38,7 @@ class ErrorCode(IntEnum):
     INVALID_MODULE = 104
     TIMEOUT = 105
     FORBIDDEN = 106
+    CONNECTION_TIMEOUT = 107
 
 ERROR_REGISTRY: dict[ErrorCode, tuple[int, str]] = {
     ErrorCode.WEBSITE_PARSE_FAILED: (3, "Failed to fetch the page"),
@@ -47,6 +48,7 @@ ERROR_REGISTRY: dict[ErrorCode, tuple[int, str]] = {
     ErrorCode.INVALID_MODULE: (3, "The requested module does not exist"),
     ErrorCode.TIMEOUT: (2, "The request timed out"),
     ErrorCode.FORBIDDEN: (3, "Access forbidden - VPN may be required"),
+    ErrorCode.CONNECTION_TIMEOUT: (3, "Unable to reach the network, check your internet connection")
 }
 
 @dataclass
@@ -72,7 +74,7 @@ class Error:
     @classmethod
     def from_code(cls, code: ErrorCode, origin: str, exception: Exception | None = None, msg: Optional[str] = None) -> "Error":
         log = getLogger()
-        log.error("Error occurred in parsing %s: %s", origin, str(exception))
+        log.error("Error %d: %s - %s", code, origin, str(exception))
         severity, default_msg = ERROR_REGISTRY[code]
         alert_type = 'info'
         if severity == 1: alert_type = 'info'
@@ -141,12 +143,16 @@ def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote
     return 0
 
 def checkUpdates():
+    # TODO Add timeout for no internet connection
     files = listAllPythonFiles()
     log = getLogger()
     log.info("[Updater] Checking for updates")
     files_to_update: dict[str, tuple[str,str]] = {}
     for file in files:
-        r = requests.get(f"{BASE_URL}{file}")
+        try:
+            r = requests.get(f"{BASE_URL}{file}", timeout=(3,10))
+        except Exception as e:
+            return files_to_update, Error.from_code(ErrorCode.CONNECTION_TIMEOUT, msg="Unable to reach Github, check your internet connection", origin="Updater", exception=e)
         remote_major = None
         local_major = None
         remote_minor = None
@@ -184,7 +190,7 @@ def checkUpdates():
             setUpdateAvailable(True)
         files_to_update[file] = (f"{local_major}.{local_minor}.{local_bugfix}", f"{remote_major}.{remote_minor}.{remote_bugfix}")
     log.info("[Updater] Successfully checked for updates")
-    return files_to_update
+    return files_to_update, None
 
 def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     # Singleton behaviour

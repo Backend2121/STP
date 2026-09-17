@@ -68,9 +68,12 @@ class SearchBar(ui.column):
         if query == None or query == "":
             ui.notify('Search bar is empty!', type='warning')
             return
+        selected_modules = app.storage.user['selected_modules']
+        if len(selected_modules) == 0:
+            ui.notify('No modules selected!', type='warning')
+            return
         log = utils.getLogger()
         app.storage.user['search_results'] = {}
-        selected_modules = app.storage.user['selected_modules']
         log.info("Starting search for %s using %s", query, selected_modules)
         SearchResults.refresh()
         mods = utils.getModulesRefs()
