@@ -4,3 +4,9 @@ tests/
 reference.md
 logs/
 secret.txt
+lib/
+include/
+bin/
+pyvenv.cfg
+*.pyc
+__pycache__/
