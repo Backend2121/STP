@@ -1,5 +1,6 @@
 import time
 
+from fastapi.datastructures import Address
 import requests
 import asyncio
 import utils
@@ -46,10 +47,10 @@ def pingWebsite(url: str, timeout: float) -> str:
             return str(9001)
         return str(e)
  
-async def ping_with_timeout(metadata: dict):
+async def ping_with_timeout(metadata: dict, origin: Address | None):
     # Pinger helper funciton, starts the thread
     # Can be removed, but it lets me have a timeout exception
-    log = utils.getLogger()
+    log = utils.getLogger(origin=origin)
     id = metadata['id']
     timeout = metadata.get('timeout', 10)
     try:
@@ -68,7 +69,7 @@ async def ping_with_timeout(metadata: dict):
  
 @ui.page(EXTENSION_INFO['base_url'])
 async def extensionPage():
-    log = utils.getLogger()
+    log = utils.getLogger(origin=ui.context.client.request.client)
     log.info("[%s] Loading %s extension page",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
@@ -82,7 +83,7 @@ async def extensionPage():
     # Epic function to wait for the ui to be ready before awaiting long shit
     await ui.context.client.connected()
     log.info("[%s] Successfully loaded %s extension",EXTENSION_INFO['id'], EXTENSION_INFO['display_name'])
-    await asyncio.gather(*(ping_with_timeout(m) for m in modules_metadata))
+    await asyncio.gather(*(ping_with_timeout(m, ui.context.client.request.client) for m in modules_metadata))
 
 @ui.refreshable
 def pingResults():

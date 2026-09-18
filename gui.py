@@ -33,7 +33,7 @@ async def confirm_restart_dialog(file: str):
 
 
 async def updateFile(file: str):
-    log = utils.getLogger()
+    log = utils.getLogger(origin=ui.context.client.request.client)
 
     if file in CRITICAL_FILES:
         confirmed = await confirm_restart_dialog(file)
@@ -63,7 +63,7 @@ def checkUpdatesAndRefresh():
 async def update_page():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
-    log = utils.getLogger()
+    log = utils.getLogger(origin=ui.context.client.request.client)
     log.info("Redirecting to /update")
     Header(dark=dark, subPageText="Updater")
     with ui.element().classes('w-full flex align-center justify-center items-center'):
@@ -100,7 +100,7 @@ def filesToUpdate():
 def settings_page():
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
-    log = utils.getLogger()
+    log = utils.getLogger(origin=ui.context.client.request.client)
     log.info("Redirecting to /settings")
     modules = app.storage.user['modules']
     log.debug("Found %s modules", modules)
@@ -131,7 +131,8 @@ def settings_page():
 
 @ui.page('/')
 def home_page():
-    log = utils.getLogger()
+    ui.add_head_html('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">')
+    log = utils.getLogger(origin=ui.context.client.request.client)
     log.info("Redirecting to /home")
     dark = ui.dark_mode()
     dark.bind_value(app.storage.user, 'dark_mode')
@@ -159,7 +160,7 @@ def home_page():
         ui.notify("An update is available!", type='positive')
 
 def runGUI():
-    log = utils.getLogger()
+    log = utils.getLogger(origin=None)
     utils.loadModules()
     utils.loadExtensions()
     secret = utils.getSecret()

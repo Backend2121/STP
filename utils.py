@@ -1,4 +1,6 @@
 from enum import IntEnum
+from fastapi.datastructures import Address
+from nicegui import ui
 import importlib
 import os
 from typing import Literal, Optional
@@ -73,7 +75,7 @@ class Error:
     exception: str = ""
     @classmethod
     def from_code(cls, code: ErrorCode, origin: str, exception: Exception | None = None, msg: Optional[str] = None) -> "Error":
-        log = getLogger()
+        log = getLogger(origin=None)
         log.error("Error %d: %s - %s", code, origin, str(exception))
         severity, default_msg = ERROR_REGISTRY[code]
         alert_type = 'info'
@@ -145,7 +147,7 @@ def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote
 def checkUpdates():
     # TODO Add timeout for no internet connection
     files = listAllPythonFiles()
-    log = getLogger()
+    log = getLogger(origin=None)
     log.info("[Updater] Checking for updates")
     files_to_update: dict[str, tuple[str,str]] = {}
     for file in files:
@@ -192,12 +194,15 @@ def checkUpdates():
     log.info("[Updater] Successfully checked for updates")
     return files_to_update, None
 
-def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
+def getLogger(origin: Address | None, name="stp_logger", log_dir="logs", level=logging.INFO):
     # Singleton behaviour
     global _logger
     if _logger is not None:
-        return _logger
-
+        client_ip = 'System'
+        if origin:
+            client_ip = origin.host
+        return logging.LoggerAdapter(_logger, {'ip': client_ip})
+    
     Path(log_dir).mkdir(exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_file = Path(log_dir) / f"{name}_{timestamp}.log"
@@ -205,11 +210,18 @@ def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.propagate = False
-
+    
     fmt = logging.Formatter(
-        "%(asctime)s [%(levelname)-8s] %(name)s: %(message)s",
+        "%(asctime)s [%(levelname)-8s] [%(ip)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
+    
+    # Small Filter class to bypass the missing ip, thanks Stack Overflow
+    class IPFilter(logging.Filter):
+        def filter(self, record):
+            if not hasattr(record, 'ip'):
+                record.ip = 'System'
+            return True
 
     file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setFormatter(fmt)
@@ -218,12 +230,14 @@ def getLogger(name="stp_logger", log_dir="logs", level=logging.DEBUG):
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(fmt)
     logger.addHandler(console_handler)
+    # Apply the small filter class
+    logger.addFilter(IPFilter())
 
     _logger = logger
     return _logger
 
 def getSecret() -> str:
-    log = getLogger()
+    log = getLogger(origin=None)
     secretPath = (Path(os.getcwd()) / "secret.txt")
     if not secretPath.exists():
         log.debug("Creating secret")
@@ -241,12 +255,12 @@ def get_cached_html(url: str) -> str | None:
 
 def cache_html(url: str, html: str) -> None:
     _html_cache[url] = html
-    log = getLogger()
+    log = getLogger(origin=None)
     log.info("[Web extension] Correctly received %s HTML from web extension", url)
 
 def delete_cached_html(url: str) -> bool:
     removed = _html_cache.pop(url, '')
-    log = getLogger()
+    log = getLogger(origin=None)
     if removed == '':
         log.debug("[Web extension] Correctly received %s HTML from web extension", url)
         return False
@@ -274,7 +288,7 @@ def loadModules():
     global loaded_modules
     global loaded_modules_metadata
     
-    log = getLogger()
+    log = getLogger(origin=None)
     
     cwd = os.getcwd() + '/'
     modules_directory = cwd + 'modules'
@@ -315,7 +329,7 @@ def loadExtensions():
     global loaded_extensions
     global loaded_extensions_metadata
     
-    log = getLogger()
+    log = getLogger(origin=None)
     
     cwd = os.getcwd() + '/'
     extensions_directory = cwd + 'extensions'

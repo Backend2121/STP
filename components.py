@@ -31,6 +31,7 @@ class Header(ui.element):
                             self.buildDrawerItem(target=ext['base_url'], icon=ext['icon'], label=ext['display_name'])
                 self.buildDrawerItem(target="/update", icon='update', label='Update')
                 self.buildDrawerItem(target="/settings", icon='settings', label='Settings')
+                self.buildDrawerItem(target="https://github.com/Backend2121/STP", icon='fa-brands fa-github', label="Github")
 
     def buildDrawerItem(self, target: str, icon: str, label: str):
         with ui.item(on_click=lambda: ui.navigate.to(target=target)).classes('cursor-pointer'):
@@ -72,7 +73,7 @@ class SearchBar(ui.column):
         if len(selected_modules) == 0:
             ui.notify('No modules selected!', type='warning')
             return
-        log = utils.getLogger()
+        log = utils.getLogger(origin=ui.context.client.request.client)
         app.storage.user['search_results'] = {}
         log.info("Starting search for %s using %s", query, selected_modules)
         SearchResults.refresh()
@@ -174,7 +175,7 @@ class SearchResults(ui.grid):
     
     async def open_internal_page(self, modId:str, target:str):
         mod = utils.getModuleById(modId)
-        log = utils.getLogger()
+        log = utils.getLogger(origin=ui.context.client.request.client)
         if mod and mod['internal_page'] == True:
             res = None
             info = None
