@@ -6,6 +6,7 @@ import utils
 VERSION = '1.0.0'
 
 class Header(ui.element):
+    # TODO Improve header on mobile
     def __init__(self, tag: str | None = None, *, _client: Client | None = None, dark, subPageText: str) -> None:
         super().__init__(tag, _client=_client)
         with ui.header().classes('items-center justify-between'):

@@ -15,6 +15,7 @@ import requests
 import re
 import httpx
 import shutil
+import socket
 
 VERSION = '1.0.0'
 BASE_URL = "https://raw.githubusercontent.com/Backend2121/STP/refs/heads/main/"
@@ -126,6 +127,18 @@ def listAllPythonFiles():
                     python_files.append(relativeSubdir + '/' + file)
 
     return python_files
+
+def get_local_ip():
+    # TODO This function does not expose, for example, a tailscale ip
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
 
 def getUpdateAvailable():
     global _update_available
