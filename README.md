@@ -36,6 +36,12 @@ Every module must be put inside `STP/modules/` with the file name terminating in
 Every extension must be put inside `STP/extensions/` with the file name terminating in `_Extension.py` and must provide:
 * `getExtensionInfo()`: returns metadata of the extension
 
+## Configuring .env
+Rename .env.example to .env and configure it
+```bash
+mv .env.example .env
+```
+
 # Starting
 ```bash
 python3 main.py
