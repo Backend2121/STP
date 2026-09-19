@@ -8,7 +8,7 @@ A python based modular websites scraper with a webUI built with NiceGUI
 * Automatic updates
 
 ## Requirements
-* Python 3.14
+* Python 3.14 https://www.python.org/downloads/
 
 # Installing
 ## Downloading
@@ -40,7 +40,7 @@ Every extension must be put inside `STP/extensions/` with the file name terminat
 Rename .env.example to .env and configure it
 ```bash
 mv .env.example .env
-```
+``5,
 
 # Starting
 ```bash
