@@ -22,25 +22,40 @@ pip install -r requirements.txt
 
 # Setting up
 
-## Core logic
-*Module = Scraper*
-*Extension = Feature*
-
-## Modules
-Every module must be put inside `STP/modules/` with the file name terminating in `_Module.py` and must provide:
-
-* `getModuleInfo()`: returns metadata of the module
-* `getLinks(query, base_url)`: searches for query and returns results/errors
-
-## Extensions
-Every extension must be put inside `STP/extensions/` with the file name terminating in `_Extension.py` and must provide:
-* `getExtensionInfo()`: returns metadata of the extension
-
 ## Configuring .env
 Rename .env.example to .env and configure it
 ```bash
 mv .env.example .env
-``5,
+```
+
+## Installing STP's web extension
+
+STP Extension captures a page's full HTML once it has finished loading and sends it to /api/eb API
+The extension only captures pages whose URL contains `#stp-capture`
+
+- Unzip STP_WE.zip
+
+### Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on…**
+3. Select the `manifest.json` file in the project's root folder
+
+Firefox unloads temporary add-ons when it closes, so repeat these steps after a restart
+
+### Chrome
+
+1. Open `chrome://extensions`
+2. Turn on **Developer mode** (top-right)
+3. Click **Load unpacked** and select the `dist/chrome` folder
+
+### Configure
+
+Set the **API host** (`ip:port`) in the extension's settings
+It defaults to `127.0.0.1:8080`, and HTML pages are sent to `http://<ip:port>/api/eb`
+
+- **Firefox:** `about:addons` → **STP Extension** → **Preferences**
+- **Chrome:** `chrome://extensions` → **Details** on the extension → **Extension options**
 
 # Starting
 ```bash
@@ -61,6 +76,19 @@ STP logs to a new file each time it gets started, useful for debugging purposes 
 # Contributions
 Very welcome!
 Just follow the current structure and make a pull request!
+## Core logic
+*Module = Scraper*
+*Extension = Feature*
+
+## Modules
+Every module must be put inside `STP/modules/` with the file name terminating in `_Module.py` and must provide:
+
+* `getModuleInfo()`: returns metadata of the module
+* `getLinks(query, base_url)`: searches for query and returns results/errors
+
+## Extensions
+Every extension must be put inside `STP/extensions/` with the file name terminating in `_Extension.py` and must provide:
+* `getExtensionInfo()`: returns metadata of the extension
 
 # License
 AGPLv3 https://www.gnu.org/licenses/agpl-3.0.html
