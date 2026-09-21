@@ -8,7 +8,8 @@ A python based modular websites scraper with a webUI built with NiceGUI
 * Automatic updates
 
 ## Requirements
-* Python 3.14 https://www.python.org/downloads/
+* Python 3.10+ (3.14 recommended) https://www.python.org/downloads/
+  The installer below sets it up for you where it can (winget on Windows, Homebrew on macOS)
 
 # Installing
 ## Downloading
@@ -19,22 +20,39 @@ Download the latest (pre)release from https://github.com/Backend2121/STP/release
 git clone https://github.com/Backend2121/STP.git
 ```
 
-# Setting up
-Extract the `STP_Prerelease_0.0.1.zip`
-Open the extracted folder in a terminal/cmd and run the following:
+## Quick install
+Extract the downloaded `.zip`, open the extracted folder and run the installer for your OS.
+It finds (or installs) Python, creates the `venv`, installs the requirements and creates your `.env`
+
+| OS | Installer | Start STP later with |
+|---|---|---|
+| Windows | Double-click `install.bat` | `start.bat` |
+| macOS | Double-click `install.command` | `start.command` |
+| Linux | `bash install.sh` in the extracted folder | `bash start.sh` |
+
+At the end the installer asks if you want to start STP right away
+
+* **Windows:** if a "Security Warning" appears for the downloaded file, choose **Run**
+* **macOS:** the first time, right-click `install.command` → **Open** → **Open** (Gatekeeper blocks downloaded scripts on a double-click). If it says the file is not executable, run `bash install.sh` in Terminal instead
+* **Linux:** if Python 3.10+ is missing, the installer prints the package manager command to run (it never uses `sudo` by itself)
+
+Run `install.bat --unattended` / `bash install.sh --unattended` to skip the prompts
+
+## Manual install
+Extract the `.zip`, open the extracted folder in a terminal/cmd and run the following:
 
 ### (if `python3` is not found use `python` for the rest of the guide)
 
 ```bash
 python3 -m venv venv
-source venv/bin/activate
+source venv/bin/activate      # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-## Configuring .env
+### Configuring .env
 Rename `.env.example` to `.env` and configure it
 ```bash
-mv .env.example .env
+mv .env.example .env          # Windows: ren .env.example .env
 ```
 
 ## Installing STP's web extension
@@ -67,6 +85,9 @@ It defaults to `127.0.0.1:8080`, and HTML pages are sent to `http://<ip:port>/ap
 - **Chrome:** `chrome://extensions` → **Details** on the extension → **Extension options**
 
 # Starting
+Use the launcher created for your OS: `start.bat` (Windows), `start.command` (macOS) or `bash start.sh` (Linux)
+
+Or, with a manual install (venv activated):
 ```bash
 python3 main.py
 ```
