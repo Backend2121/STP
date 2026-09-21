@@ -5,6 +5,7 @@ import utils
 import asyncio
 from dotenv import load_dotenv
 import os
+from pathlib import PurePosixPath
 
 VERSION = '1.0.1'
 
@@ -79,7 +80,7 @@ def filesToUpdate():
         for k, v in updateResults.items():
             with ui.row().classes("items-center justify-between w-full"):
                 with ui.row().classes("items-center"):
-                    ui.label(text=f'{k.split('/')[-1]}:').classes("font-bold")
+                    ui.label(text=f'{PurePosixPath(k).name}:').classes("font-bold")
 
                     if v == "Loading":
                         ui.spinner(size='sm')

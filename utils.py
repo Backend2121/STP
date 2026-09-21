@@ -112,19 +112,12 @@ def download_and_replace(file: str):
     shutil.move(tmp, target)
 
 def listAllPythonFiles():
-    cwd = os.getcwd()
+    cwd = Path.cwd()
     python_files = []
-    scannable_subdirs = [cwd + '/extensions', cwd + '/modules', cwd]
+    scannable_subdirs = [cwd / 'extensions', cwd / 'modules', cwd]
     for subdir in scannable_subdirs:
-        files = os.listdir(subdir)
-        for file in files:
-            if file.endswith(".py"):
-                relativeSubdir = subdir.split('/')[-1]
-                # Dodge the STP main folder and append only the base file name
-                if relativeSubdir == 'STP':
-                    python_files.append(file)
-                else:
-                    python_files.append(relativeSubdir + '/' + file)
+        for file in subdir.glob('*.py'):
+            python_files.append(file.relative_to(cwd).as_posix())
 
     return python_files
 
@@ -149,12 +142,15 @@ def setUpdateAvailable(val: bool):
     _update_available = val
 
 def updateAvailable(remote_major, local_major, remote_minor, local_minor, remote_bugfix, local_bugfix) -> int:
-    if remote_major > local_major:
-        return 1
-    if remote_minor > local_minor:
-        return 2
-    if remote_bugfix > local_bugfix:
-        return 3
+    try:
+        if remote_major > local_major:
+            return 1
+        if remote_minor > local_minor:
+            return 2
+        if remote_bugfix > local_bugfix:
+            return 3
+    except:
+        return 4
     return 0
 
 def checkUpdates():
@@ -184,7 +180,7 @@ def checkUpdates():
                 log.error("[Updater] Remote %s version undefined", file)
                 continue
             # Read local file
-            with open(os.getcwd() + "/" + file, "r") as f:
+            with open(Path.cwd() / file, "r") as f:
                 local_matches = re.findall(r"(?:VERSION|'version')\s?(?:=|:)\s?'(\d+.\d+.\d+)'", f.read())
                 if len(local_matches) == 1:
                     local_major, local_minor, local_bugfix = [ int(i) for i in local_matches[0].split(".")]
@@ -203,6 +199,8 @@ def checkUpdates():
         if res == 3:
             log.warning("[Updater] Bugfix update for %s is available", file)
             setUpdateAvailable(True)
+        if res == 4:
+            log.error("[Updater] Unable to fetch version for %s", file)
         files_to_update[file] = (f"{local_major}.{local_minor}.{local_bugfix}", f"{remote_major}.{remote_minor}.{remote_bugfix}")
     log.info("[Updater] Successfully checked for updates")
     return files_to_update, None
@@ -251,7 +249,7 @@ def getLogger(origin: Address | None, name="stp_logger", log_dir="logs", level=l
 
 def getSecret() -> str:
     log = getLogger(origin=None)
-    secretPath = (Path(os.getcwd()) / "secret.txt")
+    secretPath = Path.cwd() / "secret.txt"
     if not secretPath.exists():
         log.debug("Creating secret")
         secretPath.touch(exist_ok=True)
@@ -303,8 +301,7 @@ def loadModules():
     
     log = getLogger(origin=None)
     
-    cwd = os.getcwd() + '/'
-    modules_directory = cwd + 'modules'
+    modules_directory = Path.cwd() / 'modules'
     files_in_modules_directory = os.listdir(modules_directory)
     modules = []
     for file in files_in_modules_directory:
@@ -344,8 +341,7 @@ def loadExtensions():
     
     log = getLogger(origin=None)
     
-    cwd = os.getcwd() + '/'
-    extensions_directory = cwd + 'extensions'
+    extensions_directory = Path.cwd() / 'extensions'
     files_in_extensions_directory = os.listdir(extensions_directory)
     extensions = []
     for file in files_in_extensions_directory:

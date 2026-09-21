@@ -47,7 +47,7 @@ class SearchBar(ui.column):
         with self.classes('w-full '):
             with ui.card().classes('w-[85%]'):
                     with ui.row(align_items='center').classes('w-full justify-between'):
-                        self.search = ui.input('Search').classes('flex-3')
+                        self.search = ui.input('Search').classes('flex-3').on('keydown.enter', lambda: self.get_links(self.search.value))
                         ui.button("Search", icon='search', on_click=lambda: self.get_links(self.search.value)).classes('flex-1')
     
     async def get_links(self, query: str | None) -> None:
