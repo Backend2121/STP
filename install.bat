@@ -2,6 +2,7 @@
 setlocal EnableExtensions
 cd /d "%~dp0"
 title STP installer
+echo STP is installing...
 
 set "UNATTENDED=0"
 if /i "%~1"=="--unattended" set "UNATTENDED=1"

@@ -3,6 +3,8 @@ set -u
 
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 
+echo "STP is installing..."
+
 UNATTENDED=0
 [ "${1:-}" = "--unattended" ] && UNATTENDED=1
 
