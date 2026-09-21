@@ -32,17 +32,17 @@ pip install -r requirements.txt
 ```
 
 ## Configuring .env
-Rename .env.example to .env and configure it
+Rename `.env.example` to `.env` and configure it
 ```bash
 mv .env.example .env
 ```
 
 ## Installing STP's web extension
 
-STP Extension captures a page's full HTML once it has finished loading and sends it to /api/eb API
+STP Extension captures a page's full HTML once it has finished loading and sends it to `/api/eb` API
 The extension only captures pages whose URL contains `#stp-capture`
 
-- Unzip STP_WE.zip
+- Unzip `STP_WE.zip`
 
 ### Firefox
 
