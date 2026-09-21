@@ -12,15 +12,24 @@ A python based modular websites scraper with a webUI built with NiceGUI
 
 # Installing
 ## Downloading
+Download the latest `STP_Prerelease_0.0.1.zip` from https://github.com/Backend2121/STP/releases
+
+### Or
 ```bash
 git clone https://github.com/Backend2121/STP.git
-cd STP
+```
+
+# Setting up
+Extract the `STP_Prerelease_0.0.1.zip`
+Open the extracted folder in a terminal/cmd and run the following:
+
+### (if `python3` is not found use `python` for the rest of the guide)
+
+```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
-
-# Setting up
 
 ## Configuring .env
 Rename .env.example to .env and configure it
@@ -76,6 +85,7 @@ STP logs to a new file each time it gets started, useful for debugging purposes 
 # Contributions
 Very welcome!
 Just follow the current structure and make a pull request!
+
 ## Core logic
 *Module = Scraper*
 *Extension = Feature*
