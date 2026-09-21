@@ -12,7 +12,7 @@ A python based modular websites scraper with a webUI built with NiceGUI
 
 # Installing
 ## Downloading
-Download the latest `STP_Prerelease_0.0.1.zip` from https://github.com/Backend2121/STP/releases
+Download the latest (pre)release from https://github.com/Backend2121/STP/releases
 
 ### Or
 ```bash
