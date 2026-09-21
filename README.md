@@ -33,7 +33,7 @@ It finds (or installs) Python, creates the `venv`, installs the requirements and
 At the end the installer asks if you want to start STP right away
 
 * **Windows:** if a "Security Warning" appears for the downloaded file, choose **Run**
-* **macOS:** the first time, right-click `install.command` → **Open** → **Open** (Gatekeeper blocks downloaded scripts on a double-click). If it says the file is not executable, run `bash install.sh` in Terminal instead
+* **macOS:** the first time, right-click `install.command` -> **Open** -> **Open** (Gatekeeper blocks downloaded scripts on a double-click). If it says the file is not executable, run `bash install.sh` in Terminal instead
 * **Linux:** if Python 3.10+ is missing, the installer prints the package manager command to run (it never uses `sudo` by itself)
 
 Run `install.bat --unattended` / `bash install.sh --unattended` to skip the prompts
